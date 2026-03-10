@@ -1,0 +1,56 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stars {
+  display: flex;
+  gap: 2px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.star {
+  font-size: 1.8rem;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--transition-fast);
+}
+
+.star:hover {
+  transform: scale(1.2);
+}
+
+.star.disabled {
+  cursor: default;
+  pointer-events: none;
+}
+
+.full {
+  color: var(--color-accent-gold);
+}
+
+.empty {
+  color: var(--color-border);
+}
+
+.value {
+  font-family: var(--font-ui);
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--color-accent-gold);
+  min-width: 30px;
+  text-align: center;
+}

@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@700;800;900&display=swap');
+
+:root {
+  /* Backgrounds */
+  --color-bg:           #0d0f1a;
+  --color-bg-alt:       #161929;
+  --color-bg-card:      #1e2235;
+  --color-bg-glass:     rgba(30,34,53,0.85);
+
+  /* Primary colors */
+  --color-primary:            #ff4500;
+  --color-primary-dark:       #cc3500;
+  --color-secondary:          #0096ff;
+  --color-secondary-dark:     #006bbf;
+  --color-accent-green:       #00d96e;
+  --color-accent-green-dark:  #00994d;
+  --color-accent-gold:        #ffcc00;
+  --color-accent-gold-dark:   #cc9f00;
+  --color-accent-purple:      #8b5cf6;
+
+  /* Text */
+  --color-text:         #f0f2ff;
+  --color-text-dim:     #7b82a6;
+  --color-text-inverse: #0d0f1a;
+  --color-white:        #ffffff;
+
+  /* Borders */
+  --color-border:       #2d3358;
+  --color-border-light: #3d4575;
+
+  /* Legacy color aliases (used in existing JSX) */
+  --color-neon-yellow:  var(--color-accent-gold);
+  --color-neon-red:     var(--color-primary);
+  --color-neon-blue:    var(--color-secondary);
+  --color-neon-green:   var(--color-accent-green);
+  --color-neon-purple:  var(--color-accent-purple);
+
+  /* Fonts */
+  --font-display: 'Bangers', 'Impact', cursive;
+  --font-arcade:  var(--font-display);
+  --font-ui:      'Nunito', system-ui, sans-serif;
+
+  /* Spacing */
+  --space-xs:   4px;
+  --space-sm:   8px;
+  --space-md:   16px;
+  --space-lg:   24px;
+  --space-xl:   40px;
+  --space-2xl:  64px;
+
+  /* Border radii */
+  --radius-sm:   6px;
+  --radius-md:   12px;
+  --radius-lg:   20px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-btn-primary:   0 5px 0 var(--color-primary-dark);
+  --shadow-btn-secondary: 0 5px 0 var(--color-secondary-dark);
+  --shadow-btn-green:     0 5px 0 var(--color-accent-green-dark);
+  --shadow-btn-gold:      0 5px 0 var(--color-accent-gold-dark);
+  --shadow-card:    0 4px 20px rgba(0,0,0,0.5), 0 1px 0 var(--color-border-light);
+  --shadow-modal:   0 20px 60px rgba(0,0,0,0.8);
+  --shadow-display: 3px 3px 0 rgba(0,0,0,0.6);
+  --shadow-avatar:  0 4px 16px rgba(0,0,0,0.5);
+  --glow-gold:      0 0 12px rgba(255,204,0,0.4);
+  --glow-primary:   0 0 12px rgba(255,69,0,0.35);
+
+  /* Legacy glow aliases */
+  --glow-yellow: var(--glow-gold);
+  --glow-red:    var(--glow-primary);
+  --glow-blue:   0 0 12px rgba(0,150,255,0.35);
+  --glow-green:  0 0 12px rgba(0,217,110,0.35);
+  --glow-purple: 0 0 12px rgba(139,92,246,0.35);
+
+  /* Transitions */
+  --transition-fast:   80ms ease;
+  --transition-mid:    150ms cubic-bezier(0.34,1.56,0.64,1);
+  --transition-spring: 300ms cubic-bezier(0.34,1.56,0.64,1);
+}

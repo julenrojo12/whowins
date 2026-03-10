@@ -1,0 +1,80 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl) var(--space-md);
+}
+
+.ratingCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xl);
+}
+
+.doneState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  text-align: center;
+  padding: var(--space-xl) 0;
+}
+
+.progress {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.progressDot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  background: var(--color-bg-alt);
+  cursor: pointer;
+  transition: all var(--transition-mid);
+}
+
+.progressDot.rated  {
+  background: var(--color-accent-green);
+  border-color: var(--color-accent-green);
+  box-shadow: 0 2px 0 var(--color-accent-green-dark);
+}
+.progressDot.active {
+  border-color: var(--color-accent-gold);
+  box-shadow: 0 0 0 3px rgba(255,204,0,0.3);
+  transform: scale(1.2);
+}
+
+.targetDisplay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.targetName {
+  font-family: var(--font-display);
+  font-size: 28px;
+  color: var(--color-accent-gold);
+  text-shadow: var(--shadow-display);
+  letter-spacing: 0.04em;
+}
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  width: 100%;
+  max-width: 300px;
+}
+
+.navRow {
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+}

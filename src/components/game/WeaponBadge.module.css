@@ -1,0 +1,44 @@
+.badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-bg-alt);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  box-shadow: var(--shadow-card);
+}
+
+.danger_red    { border-color: var(--color-primary);      box-shadow: 0 3px 0 var(--color-primary-dark); }
+.danger_yellow { border-color: var(--color-accent-gold);  box-shadow: 0 3px 0 var(--color-accent-gold-dark); }
+.danger_green  { border-color: var(--color-accent-green); box-shadow: 0 3px 0 var(--color-accent-green-dark); }
+
+.img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.icon {
+  font-size: 1.5rem;
+  width: 36px;
+  text-align: center;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+}
+
+.name {
+  font-family: var(--font-ui);
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--color-text);
+}
+
+.danger {
+  font-size: 0.85rem;
+  color: var(--color-accent-gold);
+  letter-spacing: -1px;
+}

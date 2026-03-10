@@ -1,0 +1,110 @@
+/* Flicker — kept for compat */
+@keyframes flicker {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Glitch — winner reveal */
+@keyframes glitch {
+  0%   { transform: translate(0); clip-path: none; }
+  5%   { transform: translate(-4px, 2px); clip-path: polygon(0 30%, 100% 30%, 100% 50%, 0 50%); }
+  10%  { transform: translate(4px, -2px); clip-path: polygon(0 60%, 100% 60%, 100% 80%, 0 80%); }
+  15%  { transform: translate(0); clip-path: none; }
+  85%  { transform: translate(0); clip-path: none; }
+  90%  { transform: translate(-2px, 1px); clip-path: polygon(0 10%, 100% 10%, 100% 30%, 0 30%); }
+  95%  { transform: translate(2px, -1px); clip-path: polygon(0 70%, 100% 70%, 100% 90%, 0 90%); }
+  100% { transform: translate(0); clip-path: none; }
+}
+
+/* Slide in from sides — VS screen fighters (spring curve) */
+@keyframes slideInLeft {
+  from { transform: translateX(-120%); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+@keyframes slideInRight {
+  from { transform: translateX(120%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+/* FIGHT! burst */
+@keyframes fightBurst {
+  0%   { transform: scale(0.2) rotate(-5deg); opacity: 0; }
+  60%  { transform: scale(1.2) rotate(2deg);  opacity: 1; }
+  80%  { transform: scale(0.95) rotate(-1deg); }
+  100% { transform: scale(1) rotate(0deg);    opacity: 1; }
+}
+
+/* KO overlay */
+@keyframes koSlam {
+  0%   { transform: scale(3); opacity: 0; }
+  30%  { transform: scale(0.9); opacity: 1; }
+  50%  { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Pulse glow — uses brightness instead of neon box-shadow */
+@keyframes pulseGlow {
+  0%, 100% { filter: brightness(1); }
+  50%       { filter: brightness(1.15); }
+}
+
+/* Bounce in */
+@keyframes bounceIn {
+  0%   { transform: scale(0.3); opacity: 0; }
+  50%  { transform: scale(1.1); opacity: 1; }
+  70%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+/* Float up */
+@keyframes floatUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* Spin */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Winner star burst */
+@keyframes starBurst {
+  0%   { transform: scale(0) rotate(0deg);   opacity: 1; }
+  100% { transform: scale(2) rotate(720deg); opacity: 0; }
+}
+
+/* Shake */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25%       { transform: translateX(-6px); }
+  75%       { transform: translateX(6px); }
+}
+
+/* Fade in */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Slide up */
+@keyframes slideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+/* Utility animation classes */
+.anim-flicker     { animation: flicker 1.2s step-end infinite; }
+.anim-glitch      { animation: glitch 2s infinite; }
+.anim-slide-left  { animation: slideInLeft 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.anim-slide-right { animation: slideInRight 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.anim-fight       { animation: fightBurst 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.anim-ko          { animation: koSlam 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.anim-pulse-glow  { animation: pulseGlow 1.5s ease-in-out infinite; }
+.anim-float-up    { animation: floatUp 0.4s ease forwards; }
+.anim-spin        { animation: spin 1s linear infinite; }
+.anim-fade-in     { animation: fadeIn 0.3s ease forwards; }
+.anim-slide-up    { animation: slideUp 0.4s ease forwards; }
+.anim-shake       { animation: shake 0.3s ease; }
+.anim-bounce-in   { animation: bounceIn 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards; }
