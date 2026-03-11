@@ -7,6 +7,8 @@
   border-radius: var(--radius-md);
   padding: 8px 12px;
   box-shadow: var(--shadow-card);
+  max-width: 100%;
+  min-width: 0;
 }
 
 .danger_red    { border-color: var(--color-primary);      box-shadow: 0 3px 0 var(--color-primary-dark); }
@@ -28,6 +30,7 @@
 .info {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .name {
@@ -35,6 +38,31 @@
   font-weight: 800;
   font-size: 1rem;
   color: var(--color-text);
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+@media (max-width: 640px) {
+  .badge {
+    padding: 6px 8px;
+    gap: 6px;
+  }
+
+  .img,
+  .icon {
+    width: 28px;
+    height: 28px;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .name {
+    font-size: 0.75rem;
+  }
+
+  .danger {
+    font-size: 0.7rem;
+  }
 }
 
 .danger {
