@@ -1,6 +1,5 @@
 import styles from './WeaponBadge.module.css'
 import type { Weapon } from '../../types/game'
-import { dangerToStars } from '../../lib/utils'
 
 interface Props {
   weapon: Weapon
@@ -8,9 +7,9 @@ interface Props {
 }
 
 export function WeaponBadge({ weapon, showDanger = true }: Props) {
-  const stars = dangerToStars(weapon.danger_level)
-  const dangerColor = weapon.danger_level >= 8 ? 'red'
-    : weapon.danger_level >= 5 ? 'yellow'
+  const stars = weapon.danger_level
+  const dangerColor = weapon.danger_level >= 4 ? 'red'
+    : weapon.danger_level >= 3 ? 'yellow'
     : 'green'
 
   return (
@@ -23,9 +22,8 @@ export function WeaponBadge({ weapon, showDanger = true }: Props) {
         <span className={styles.name}>{weapon.name}</span>
         {showDanger && (
           <span className={styles.danger}>
-            {'★'.repeat(Math.floor(stars))}
-            {stars % 1 >= 0.5 ? '½' : ''}
-            {'☆'.repeat(5 - Math.ceil(stars))}
+            {'★'.repeat(stars)}
+            {'☆'.repeat(5 - stars)}
           </span>
         )}
       </div>
