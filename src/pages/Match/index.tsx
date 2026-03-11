@@ -371,7 +371,7 @@ export function MatchPage() {
       {isHost && !winner && (
         <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', justifyContent: 'center' }}>
           {!votingStarted && (
-            <ArcadeButton variant="primary" size="lg" onClick={handleStartVoting}>
+            <ArcadeButton variant="green" size="lg" onClick={handleStartVoting}>
               {t('match.startVoting')}
             </ArcadeButton>
           )}
