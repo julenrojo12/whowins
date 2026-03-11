@@ -75,6 +75,70 @@
   letter-spacing: 0.04em;
 }
 
+/* ── Stats block ─────────────────────────────────────────── */
+.statsBlock {
+  width: 100%;
+  max-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+}
+
+.statRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.statLabel {
+  font-family: var(--font-display);
+  font-size: 10px;
+  color: var(--color-text-dim);
+  letter-spacing: 0.06em;
+  flex: 0 0 72px;
+  text-align: right;
+}
+
+.statBar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.statFill {
+  height: 100%;
+  background: var(--color-accent-gold);
+  border-radius: var(--radius-full);
+  transition: width 0.4s ease;
+}
+
+.statValue {
+  font-family: var(--font-ui);
+  font-weight: 800;
+  font-size: 10px;
+  color: var(--color-text);
+  flex: 0 0 24px;
+  text-align: left;
+}
+
+/* Mirror layout for fighter 2 */
+.statsRight .statRow {
+  flex-direction: row-reverse;
+}
+.statsRight .statLabel {
+  text-align: left;
+}
+.statsRight .statValue {
+  text-align: right;
+}
+
+/* ── Vote button ─────────────────────────────────────────── */
 .voteBtn {
   background: var(--color-secondary);
   color: #fff;
@@ -106,6 +170,7 @@
   box-shadow: var(--shadow-btn-green);
 }
 
+/* ── VS divider ──────────────────────────────────────────── */
 .vsDivider {
   display: flex;
   flex-direction: column;
@@ -151,6 +216,7 @@
   color: var(--color-text-dim);
 }
 
+/* ── Winner banner ───────────────────────────────────────── */
 .winnerBanner {
   background: var(--color-bg-card);
   border: 4px solid var(--color-accent-gold);
@@ -174,7 +240,83 @@
 @keyframes slideInRight { from { transform: translateX(120%);  opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 @keyframes koSlam       { from { transform: scale(2); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
+/* ── Mobile ──────────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .vsContainer { flex-direction: column; }
+  .page {
+    min-height: 100svh;
+    justify-content: flex-start;
+    padding: var(--space-md) var(--space-xs);
+    gap: var(--space-sm);
+  }
+
+  .vsContainer {
+    /* Keep fighters side-by-side — no column stacking */
+    gap: 6px;
+    align-items: flex-start;
+  }
+
+  .fighter {
+    gap: 6px;
+  }
+
   .fighter1, .fighter2 { animation: none; }
+
+  .fighterName {
+    font-size: 12px;
+    letter-spacing: 0;
+  }
+
+  .statsBlock {
+    max-width: 100%;
+    padding: 6px 8px;
+    gap: 4px;
+  }
+
+  /* On mobile, show stat labels abbreviated above the bar */
+  .statLabel {
+    display: none;
+  }
+
+  .statBar {
+    height: 5px;
+  }
+
+  .statValue {
+    font-size: 9px;
+    flex: 0 0 20px;
+  }
+
+  /* Mirror: reset row direction so both fighters show value right of bar */
+  .statsRight .statRow {
+    flex-direction: row;
+  }
+  .statsRight .statValue {
+    text-align: left;
+  }
+
+  .vsDivider {
+    min-width: 48px;
+    gap: 4px;
+  }
+
+  .vsLabel {
+    font-size: 22px;
+  }
+
+  .voteBar {
+    height: 10px;
+  }
+
+  .voteCount {
+    font-size: 0.7rem;
+  }
+
+  .voteBtn {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .winnerBanner {
+    padding: var(--space-md) var(--space-lg);
+  }
 }
