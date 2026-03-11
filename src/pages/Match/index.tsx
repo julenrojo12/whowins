@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import styles from './Match.module.css'
 import { ArcadeButton } from '../../components/ui/ArcadeButton'
 import { ArcadeFrame } from '../../components/layout/ArcadeFrame'
@@ -16,8 +16,11 @@ import { useGameStore } from '../../store'
 import { useLobbyRealtime } from '../../hooks/useLobbyRealtime'
 import { useLobbyMusic } from '../../hooks/useAudio'
 import { sfx } from '../../audio/sounds'
+import { supabase } from '../../lib/supabase'
 import { useT } from '../../i18n'
-import type { BracketMatch, Player, PlayerPowerScore } from '../../types/game'
+import type { BracketMatch, Player, PlayerPowerScore, LobbyEvent } from '../../types/game'
+
+const VOTING_DURATION = 10
 
 function StatBars({ score, side }: { score: PlayerPowerScore; side: 'left' | 'right' }) {
   const t = useT()
@@ -51,9 +54,21 @@ export function MatchPage() {
   useLobbyMusic('battle')
   const t = useT()
 
-  const [showFight, setShowFight] = useState(false)
-  const [closing, setClosing]     = useState(false)
-  const [winner, setWinner]       = useState<Player | null>(null)
+  const [showFight, setShowFight]       = useState(false)
+  const [closing, setClosing]           = useState(false)
+  const [winner, setWinner]             = useState<Player | null>(null)
+  const [votingStarted, setVotingStarted] = useState(false)
+  const [countdown, setCountdown]       = useState<number | null>(null)
+
+  const countdownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const autoClosedRef     = useRef(false)
+  // Refs to avoid stale closures in the countdown ticker
+  const isHostRef         = useRef(isHost)
+  const closingRef        = useRef(closing)
+  const winnerRef         = useRef(winner)
+  useEffect(() => { isHostRef.current = isHost },   [isHost])
+  useEffect(() => { closingRef.current = closing },  [closing])
+  useEffect(() => { winnerRef.current = winner },    [winner])
 
   // On mount: ensure players, weapons, brackets and power scores are loaded
   useEffect(() => {
@@ -71,8 +86,41 @@ export function MatchPage() {
   // Find the open match
   const openMatch: BracketMatch | undefined = brackets.find(b => b.status === 'open')
 
+  // ── Countdown logic ──────────────────────────────────────
+  function clearCountdownTimer() {
+    if (countdownTimerRef.current) {
+      clearTimeout(countdownTimerRef.current)
+      countdownTimerRef.current = null
+    }
+  }
+
+  function startCountdown(from: number) {
+    clearCountdownTimer()
+    autoClosedRef.current = false
+    setVotingStarted(true)
+
+    function tick(n: number) {
+      setCountdown(n)
+      sfx.countdown(n)
+      if (n <= 0) {
+        if (isHostRef.current && !autoClosedRef.current && !closingRef.current && !winnerRef.current) {
+          autoClosedRef.current = true
+          handleCloseMatch()
+        }
+        return
+      }
+      countdownTimerRef.current = setTimeout(() => tick(n - 1), 1000)
+    }
+    tick(from)
+  }
+
+  // Reset state when a new match opens
   useEffect(() => {
     if (!openMatch) return
+    clearCountdownTimer()
+    setVotingStarted(false)
+    setCountdown(null)
+    autoClosedRef.current = false
     setActiveMatchId(openMatch.id)
     setShowFight(false)
     setWinner(null)
@@ -84,6 +132,55 @@ export function MatchPage() {
     if (!openMatch) return
     getVotesForBracket(openMatch.id).then(vs => vs.forEach(upsertVote))
   }, [openMatch?.id])
+
+  // On mount / match change: check if voting_started event already exists (page refresh resilience)
+  useEffect(() => {
+    if (!openMatch || !lobby) return
+    supabase
+      .from('lobby_events')
+      .select()
+      .eq('lobby_id', lobby.id)
+      .eq('event_type', 'voting_started')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .then(({ data }) => {
+        if (!data?.[0]) return
+        const event = data[0] as LobbyEvent
+        const payload = event.payload as { match_id?: string; started_at?: number }
+        if (payload?.match_id !== openMatch.id) return
+        const startedAt = payload.started_at ?? 0
+        const elapsed   = Math.floor((Date.now() - startedAt) / 1000)
+        const remaining = VOTING_DURATION - elapsed
+        if (remaining > 0) {
+          startCountdown(remaining)
+        }
+      })
+  }, [openMatch?.id])
+
+  // Subscribe to voting_started events in realtime
+  useEffect(() => {
+    if (!lobby || !openMatch) return
+    const channel = supabase
+      .channel(`voting-ctrl:${openMatch.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'lobby_events', filter: `lobby_id=eq.${lobby.id}` },
+        (payload) => {
+          const event = payload.new as LobbyEvent
+          const ep = event.payload as { match_id?: string; started_at?: number }
+          if (event.event_type === 'voting_started' && ep?.match_id === openMatch.id) {
+            const elapsed   = Math.floor((Date.now() - (ep.started_at ?? 0)) / 1000)
+            const remaining = VOTING_DURATION - elapsed
+            if (remaining > 0) startCountdown(remaining)
+          }
+        }
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [openMatch?.id, lobby?.id])
+
+  // Cleanup timer on unmount
+  useEffect(() => () => clearCountdownTimer(), [])
 
   const me = players.find(p => p.session_id === sessionId)
   const p1 = players.find(p => p.id === openMatch?.player1_id)
@@ -101,15 +198,24 @@ export function MatchPage() {
   const totalVotes  = matchVotes.length || 1
 
   async function handleVote(playerId: string) {
-    if (!openMatch || !me || myVote) return
+    if (!openMatch || !me || myVote || !votingStarted || countdown === 0) return
     const vote = await castVote(openMatch.id, me.id, playerId)
     upsertVote(vote)
     sfx.voteCast()
   }
 
+  async function handleStartVoting() {
+    if (!openMatch || !lobby || !isHost || votingStarted) return
+    await emitLobbyEvent(lobby.id, 'voting_started', {
+      match_id:   openMatch.id,
+      started_at: Date.now(),
+    })
+  }
+
   async function handleCloseMatch() {
     if (!openMatch || !lobby || !isHost) return
     setClosing(true)
+    clearCountdownTimer()
     sfx.matchClose()
     try {
       const freshVotes = await getVotesForBracket(openMatch.id)
@@ -127,7 +233,7 @@ export function MatchPage() {
       setWinner(winnerPlayer)
 
       // Check if round is complete
-      const allBrackets = await getBrackets(lobby.id)
+      const allBrackets  = await getBrackets(lobby.id)
       const currentRound = openMatch.round_number
       const roundMatches = allBrackets.filter(b => b.round_number === currentRound)
       const allClosed    = roundMatches.every(b => b.status === 'closed' || b.id === openMatch.id)
@@ -183,6 +289,9 @@ export function MatchPage() {
     )
   }
 
+  const votingOpen    = votingStarted && countdown !== null && countdown > 0
+  const votingDisabled = !votingOpen || !!myVote || !me
+
   return (
     <div className={styles.page}>
       {showFight && (
@@ -200,7 +309,7 @@ export function MatchPage() {
           {p1Score && <StatBars score={p1Score} side="left" />}
           <button
             className={[styles.voteBtn, myVote?.voted_for_id === p1?.id ? styles.voted : ''].join(' ')}
-            disabled={!!myVote || !me}
+            disabled={votingDisabled}
             onClick={() => p1 && handleVote(p1.id)}
           >
             {t('match.vote', { n: p1Votes })}
@@ -210,6 +319,25 @@ export function MatchPage() {
         {/* VS divider */}
         <div className={styles.vsDivider}>
           <span className={styles.vsLabel}>{t('match.vs')}</span>
+
+          {/* Countdown or waiting message */}
+          {!winner && countdown !== null && (
+            <span
+              key={countdown}
+              className={[
+                styles.countdown,
+                countdown <= 3 ? styles.countdownUrgent : '',
+              ].join(' ')}
+            >
+              {countdown === 0 ? t('match.timeUp') : countdown}
+            </span>
+          )}
+          {!winner && !votingStarted && (
+            <span className={styles.waitingVoting}>
+              {t('match.waitingVoting')}
+            </span>
+          )}
+
           <div className={styles.voteBar}>
             <div className={styles.barP1} style={{ width: `${(p1Votes / totalVotes) * 100}%` }} />
             <div className={styles.barP2} style={{ width: `${(p2Votes / totalVotes) * 100}%` }} />
@@ -226,7 +354,7 @@ export function MatchPage() {
           {p2Score && <StatBars score={p2Score} side="right" />}
           <button
             className={[styles.voteBtn, styles.voteBtnRed, myVote?.voted_for_id === p2?.id ? styles.voted : ''].join(' ')}
-            disabled={!!myVote || !me}
+            disabled={votingDisabled}
             onClick={() => p2 && handleVote(p2.id)}
           >
             {t('match.vote', { n: p2Votes })}
@@ -241,9 +369,18 @@ export function MatchPage() {
       )}
 
       {isHost && !winner && (
-        <ArcadeButton variant="red" size="lg" loading={closing} onClick={handleCloseMatch}>
-          {t('match.closeMatch')}
-        </ArcadeButton>
+        <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', justifyContent: 'center' }}>
+          {!votingStarted && (
+            <ArcadeButton variant="green" size="lg" onClick={handleStartVoting}>
+              {t('match.startVoting')}
+            </ArcadeButton>
+          )}
+          {votingStarted && (
+            <ArcadeButton variant="red" size="lg" loading={closing} onClick={handleCloseMatch}>
+              {t('match.closeMatch')}
+            </ArcadeButton>
+          )}
+        </div>
       )}
     </div>
   )

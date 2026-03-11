@@ -224,6 +224,39 @@
   color: var(--color-text-dim);
 }
 
+/* ── Countdown ───────────────────────────────────────────── */
+.countdown {
+  font-family: var(--font-display);
+  font-size: clamp(56px, 14vw, 120px);
+  line-height: 1;
+  color: var(--color-accent-gold);
+  text-shadow:
+    4px 4px 0 var(--color-accent-gold-dark),
+    8px 8px 0 rgba(0,0,0,0.4);
+  animation: countdownPop 0.25s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+
+.countdownUrgent {
+  color: var(--color-primary);
+  text-shadow:
+    4px 4px 0 var(--color-primary-dark),
+    8px 8px 0 rgba(0,0,0,0.4);
+}
+
+@keyframes countdownPop {
+  0%   { transform: scale(1.5); opacity: 0.4; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+.waitingVoting {
+  font-family: var(--font-ui);
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--color-text-dim);
+  text-align: center;
+  padding: 0 var(--space-sm);
+}
+
 /* ── Winner banner ───────────────────────────────────────── */
 .winnerBanner {
   background: var(--color-bg-card);

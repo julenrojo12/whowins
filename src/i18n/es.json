@@ -69,6 +69,9 @@
   "match.voted": "✓ ¡Votado!",
   "match.closeMatch": "CERRAR COMBATE",
   "match.winner": "GANADOR: {name}",
+  "match.startVoting": "INICIAR VOTACIÓN",
+  "match.waitingVoting": "Esperando a que el host inicie la votación...",
+  "match.timeUp": "¡TIEMPO!",
 
   "results.champion": "¡CAMPEÓN!",
   "results.recap": "RESUMEN DEL BRACKET",
