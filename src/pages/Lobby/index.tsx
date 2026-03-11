@@ -124,7 +124,9 @@ export function LobbyPage() {
   }
 
   const slots = Array.from({ length: lobby?.format ?? 4 }, (_, i) => players[i] ?? null)
-  const canStart = isHost && players.length >= 2 && lobby?.status === 'waiting'
+  const humanCount = players.filter(p => p.player_type === 'human').length
+  const isSoloMode = humanCount === 1 && isHost
+  const canStart = isHost && players.length >= 1 && lobby?.status === 'waiting'
 
   return (
     <div className={styles.page}>
@@ -154,6 +156,11 @@ export function LobbyPage() {
           <p className="text-ui text-dim">
             {t('lobby.playersJoined', { n: players.length, total: lobby?.format ?? '?' })}
           </p>
+          {isSoloMode && (
+            <p className="text-ui" style={{ color: 'var(--color-accent-gold)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
+              {t('lobby.soloMode')}
+            </p>
+          )}
           {isHost && (
             <ArcadeButton
               variant="yellow"
