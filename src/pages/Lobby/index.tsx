@@ -10,6 +10,7 @@ import { supabase } from '../../lib/supabase'
 import { getLobbyByCode } from '../../services/lobbyService'
 import { getPlayersForLobby, addHumanPlayer, addBotPlayer } from '../../services/playerService'
 import { getCharactersForSet } from '../../services/setsService'
+import { shuffle } from '../../lib/utils'
 import { uploadPlayerPhoto } from '../../services/storageService'
 import { updateLobbyStatus, emitLobbyEvent } from '../../services/lobbyService'
 import { useSession } from '../../hooks/useSession'
@@ -101,7 +102,7 @@ export function LobbyPage() {
 
       if (botsNeeded > 0 && lobby.character_set_id) {
         const chars = await getCharactersForSet(lobby.character_set_id)
-        const available = chars.filter(c => !players.some(p => p.name === c.name))
+        const available = shuffle(chars.filter(c => !players.some(p => p.name === c.name)))
         for (let i = 0; i < botsNeeded && i < available.length; i++) {
           await addBotPlayer(lobby.id, available[i], humanCount + i + 1)
         }
