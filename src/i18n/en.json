@@ -69,6 +69,9 @@
   "match.voted": "✓ Voted!",
   "match.closeMatch": "CLOSE MATCH",
   "match.winner": "WINNER: {name}",
+  "match.startVoting": "START VOTING",
+  "match.waitingVoting": "Waiting for host to start voting...",
+  "match.timeUp": "TIME'S UP!",
 
   "results.champion": "CHAMPION!",
   "results.recap": "BRACKET RECAP",

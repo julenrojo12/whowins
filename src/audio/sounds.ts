@@ -61,4 +61,18 @@ export const sfx = {
     playTone(220, 'sawtooth', 0.1, 0.15)
     playTone(196, 'sawtooth', 0.1, 0.15, 0.1)
   },
+
+  countdown(n: number) {
+    if (n === 0) {
+      // Final buzzer: two descending harsh tones
+      playTone(330, 'sawtooth', 0.12, 0.2)
+      playTone(220, 'sawtooth', 0.12, 0.2, 0.13)
+    } else if (n <= 3) {
+      // Urgent high-pitched beep, pitch rises as time runs out
+      playTone(660 + (3 - n) * 110, 'square', 0.1, 0.18)
+    } else {
+      // Regular low tick
+      playTone(440, 'square', 0.06, 0.08)
+    }
+  },
 }
