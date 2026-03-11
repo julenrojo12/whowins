@@ -10,7 +10,7 @@ export function useLobbyRealtime(lobbyId: string | null) {
   const navigate = useNavigate()
   const {
     setLobby, upsertPlayer, upsertRating, upsertBracket, upsertVote,
-    lobby,
+    lobby, setVotingStartedEvent,
   } = useGameStore()
 
   // Resolve effective lobby ID: prop first, then localStorage fallback (survives F5)
@@ -75,7 +75,10 @@ export function useLobbyRealtime(lobbyId: string | null) {
         { event: 'INSERT', schema: 'public', table: 'lobby_events' },
         (_payload) => {
           const event = _payload.new as LobbyEvent
-          if (event?.lobby_id === effectiveLobbyId) console.log('[lobby_event]', event.event_type, event.payload)
+          if (event?.lobby_id !== effectiveLobbyId) return
+          if (event.event_type === 'voting_started') {
+            setVotingStartedEvent(event.payload as { match_id: string; started_at: number })
+          }
         }
       )
       .subscribe()
