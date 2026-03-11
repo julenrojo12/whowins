@@ -221,7 +221,7 @@ export function SetsPage() {
                           {w.image_url && <img src={w.image_url} alt={w.name} className={styles.itemImg} />}
                           <span className={styles.itemName}>{w.name}</span>
                           <span className={styles.itemDanger}>
-                            {'★'.repeat(w.danger_level)}
+                            {'★'.repeat(w.danger_level)}{'☆'.repeat(5 - w.danger_level)}
                           </span>
                           <button className={styles.deleteBtn} onClick={() => handleDeleteWeapon(w.id)}>✕</button>
                         </div>

@@ -91,7 +91,7 @@
   "sets.create": "CREATE",
   "sets.itemName": "NAME",
   "sets.itemNamePlaceholder": "Item name...",
-  "sets.danger": "DANGER (1-10): {n}",
+  "sets.danger": "DANGER (1-5): {n}",
   "sets.image": "IMAGE (OPTIONAL)",
   "sets.addBtn": "ADD",
   "sets.deleteConfirm": "Delete this set and all its items?"

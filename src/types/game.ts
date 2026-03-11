@@ -23,7 +23,7 @@ export interface Weapon {
   set_id: string
   name: string
   image_url: string | null
-  danger_level: number  // 1-10 internal, displayed as 1-5 stars
+  danger_level: number  // 1-5
   created_at: string
 }
 

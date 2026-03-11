@@ -91,7 +91,7 @@
   "sets.create": "CREAR",
   "sets.itemName": "NOMBRE",
   "sets.itemNamePlaceholder": "Nombre del ítem...",
-  "sets.danger": "PELIGRO (1-10): {n}",
+  "sets.danger": "PELIGRO (1-5): {n}",
   "sets.image": "IMAGEN (OPCIONAL)",
   "sets.addBtn": "AÑADIR",
   "sets.deleteConfirm": "¿Eliminar este set y todos sus elementos?"
