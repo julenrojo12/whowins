@@ -33,6 +33,7 @@
   "lobby.enterArena": "ENTRAR AL ARENA",
   "lobby.nameError": "Introduce tu nombre",
   "lobby.joinError": "Error al unirse. Inténtalo de nuevo.",
+  "lobby.soloMode": "⚡ MODO SOLITARIO — los bots completarán los slots restantes",
 
   "rating.title": "VALORA A LOS LUCHADORES",
   "rating.subtitle": "Juzga fuerza, habilidad y resistencia",

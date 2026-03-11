@@ -33,6 +33,7 @@
   "lobby.enterArena": "ENTER ARENA",
   "lobby.nameError": "Enter your name",
   "lobby.joinError": "Failed to join. Try again.",
+  "lobby.soloMode": "⚡ SOLO MODE — bots will fill remaining slots",
 
   "rating.title": "RATE THE FIGHTERS",
   "rating.subtitle": "Judge strength, skill, and resistance",
