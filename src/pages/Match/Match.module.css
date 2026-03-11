@@ -94,6 +94,14 @@
   gap: 6px;
 }
 
+.statIcon {
+  display: none;
+  font-size: 12px;
+  flex: 0 0 16px;
+  text-align: center;
+  line-height: 1;
+}
+
 .statLabel {
   font-family: var(--font-display);
   font-size: 10px;
@@ -244,7 +252,7 @@
 @media (max-width: 640px) {
   .page {
     min-height: 100svh;
-    justify-content: flex-start;
+    justify-content: center;
     padding: var(--space-md) var(--space-xs);
     gap: var(--space-sm);
   }
@@ -272,9 +280,13 @@
     gap: 4px;
   }
 
-  /* On mobile, show stat labels abbreviated above the bar */
+  /* On mobile, hide text labels and show icons instead */
   .statLabel {
     display: none;
+  }
+
+  .statIcon {
+    display: inline-block;
   }
 
   .statBar {
@@ -286,12 +298,15 @@
     flex: 0 0 20px;
   }
 
-  /* Mirror: reset row direction so both fighters show value right of bar */
+  /* Mirror: reset row direction so both fighters show icon + value right of bar */
   .statsRight .statRow {
     flex-direction: row;
   }
   .statsRight .statValue {
     text-align: left;
+  }
+  .statsRight .statIcon {
+    order: 3;
   }
 
   .vsDivider {

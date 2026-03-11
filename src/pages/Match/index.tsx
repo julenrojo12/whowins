@@ -22,14 +22,15 @@ import type { BracketMatch, Player, PlayerPowerScore } from '../../types/game'
 function StatBars({ score, side }: { score: PlayerPowerScore; side: 'left' | 'right' }) {
   const t = useT()
   const stats = [
-    { label: t('rating.strength'),   value: score.avg_strength },
-    { label: t('rating.skill'),      value: score.avg_skill },
-    { label: t('rating.resistance'), value: score.avg_resistance },
+    { label: t('rating.strength'),   icon: '💪', value: score.avg_strength },
+    { label: t('rating.skill'),      icon: '🤚', value: score.avg_skill },
+    { label: t('rating.resistance'), icon: '🔋', value: score.avg_resistance },
   ]
   return (
     <div className={[styles.statsBlock, side === 'right' ? styles.statsRight : ''].filter(Boolean).join(' ')}>
-      {stats.map(({ label, value }) => (
+      {stats.map(({ label, icon, value }) => (
         <div key={label} className={styles.statRow}>
+          <span className={styles.statIcon} title={label}>{icon}</span>
           <span className={styles.statLabel}>{label}</span>
           <div className={styles.statBar}>
             <div className={styles.statFill} style={{ width: `${(value / 5) * 100}%` }} />
