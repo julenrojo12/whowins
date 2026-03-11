@@ -44,11 +44,6 @@ export function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
 }
 
-/** Format danger level (1-10) as stars (1-5) */
-export function dangerToStars(danger: number): number {
-  return danger / 2
-}
-
 /** Get ordinal suffix */
 export function ordinal(n: number): string {
   const s = ['th', 'st', 'nd', 'rd']
