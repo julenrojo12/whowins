@@ -49,7 +49,8 @@ export function MatchPage() {
   const sessionId = useSession()
   const isHost    = useIsHost()
   const { lobby, players, setPlayers, brackets, setBrackets, votes, upsertVote,
-          setActiveMatchId, powerScores, setPowerScores, weapons, setWeapons } = useGameStore()
+          setActiveMatchId, powerScores, setPowerScores, weapons, setWeapons,
+          votingStartedEvent, setVotingStartedEvent } = useGameStore()
   useLobbyRealtime(lobby?.id ?? null)
   useLobbyMusic('battle')
   const t = useT()
@@ -124,6 +125,7 @@ export function MatchPage() {
     setActiveMatchId(openMatch.id)
     setShowFight(false)
     setWinner(null)
+    setVotingStartedEvent(null)
     sfx.vsSlam()
     setTimeout(() => setShowFight(true), 1000)
   }, [openMatch?.id])
@@ -157,27 +159,15 @@ export function MatchPage() {
       })
   }, [openMatch?.id])
 
-  // Subscribe to voting_started events in realtime
+  // React to voting_started events propagated via useLobbyRealtime → Zustand store
   useEffect(() => {
-    if (!lobby || !openMatch) return
-    const channel = supabase
-      .channel(`voting-ctrl:${openMatch.id}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'lobby_events', filter: `lobby_id=eq.${lobby.id}` },
-        (payload) => {
-          const event = payload.new as LobbyEvent
-          const ep = event.payload as { match_id?: string; started_at?: number }
-          if (event.event_type === 'voting_started' && ep?.match_id === openMatch.id) {
-            const elapsed   = Math.floor((Date.now() - (ep.started_at ?? 0)) / 1000)
-            const remaining = VOTING_DURATION - elapsed
-            if (remaining > 0) startCountdown(remaining)
-          }
-        }
-      )
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
-  }, [openMatch?.id, lobby?.id])
+    if (!votingStartedEvent || !openMatch) return
+    if (votingStartedEvent.match_id !== openMatch.id) return
+    const elapsed   = Math.floor((Date.now() - votingStartedEvent.started_at) / 1000)
+    const remaining = VOTING_DURATION - elapsed
+    if (remaining > 0) startCountdown(remaining)
+    setVotingStartedEvent(null)
+  }, [votingStartedEvent, openMatch?.id])
 
   // Cleanup timer on unmount
   useEffect(() => () => clearCountdownTimer(), [])

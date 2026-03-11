@@ -49,6 +49,10 @@ interface GameStore {
   activeMatchId: string | null
   setActiveMatchId: (id: string | null) => void
 
+  // Voting started event (propagated via useLobbyRealtime)
+  votingStartedEvent: { match_id: string; started_at: number } | null
+  setVotingStartedEvent: (event: { match_id: string; started_at: number } | null) => void
+
   // Reset all game state
   resetGame: () => void
 }
@@ -62,6 +66,7 @@ const initialState = {
   votes: [],
   weapons: [],
   activeMatchId: null,
+  votingStartedEvent: null,
 }
 
 export const useGameStore = create<GameStore>((set) => ({
@@ -127,6 +132,7 @@ export const useGameStore = create<GameStore>((set) => ({
 
   setWeapons: (weapons) => set({ weapons }),
   setActiveMatchId: (activeMatchId) => set({ activeMatchId }),
+  setVotingStartedEvent: (votingStartedEvent) => set({ votingStartedEvent }),
 
   resetGame: () => set(initialState),
 }))
