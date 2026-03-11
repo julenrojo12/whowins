@@ -17,13 +17,35 @@ import { useLobbyRealtime } from '../../hooks/useLobbyRealtime'
 import { useLobbyMusic } from '../../hooks/useAudio'
 import { sfx } from '../../audio/sounds'
 import { useT } from '../../i18n'
-import type { BracketMatch, Player } from '../../types/game'
+import type { BracketMatch, Player, PlayerPowerScore } from '../../types/game'
+
+function StatBars({ score, side }: { score: PlayerPowerScore; side: 'left' | 'right' }) {
+  const t = useT()
+  const stats = [
+    { label: t('rating.strength'),   value: score.avg_strength },
+    { label: t('rating.skill'),      value: score.avg_skill },
+    { label: t('rating.resistance'), value: score.avg_resistance },
+  ]
+  return (
+    <div className={[styles.statsBlock, side === 'right' ? styles.statsRight : ''].filter(Boolean).join(' ')}>
+      {stats.map(({ label, value }) => (
+        <div key={label} className={styles.statRow}>
+          <span className={styles.statLabel}>{label}</span>
+          <div className={styles.statBar}>
+            <div className={styles.statFill} style={{ width: `${(value / 5) * 100}%` }} />
+          </div>
+          <span className={styles.statValue}>{value.toFixed(1)}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 export function MatchPage() {
   const sessionId = useSession()
   const isHost    = useIsHost()
   const { lobby, players, setPlayers, brackets, setBrackets, votes, upsertVote,
-          setActiveMatchId, powerScores, weapons, setWeapons } = useGameStore()
+          setActiveMatchId, powerScores, setPowerScores, weapons, setWeapons } = useGameStore()
   useLobbyRealtime(lobby?.id ?? null)
   useLobbyMusic('battle')
   const t = useT()
@@ -32,10 +54,15 @@ export function MatchPage() {
   const [closing, setClosing]     = useState(false)
   const [winner, setWinner]       = useState<Player | null>(null)
 
-  // On mount: ensure players, weapons, and brackets are loaded
+  // On mount: ensure players, weapons, brackets and power scores are loaded
   useEffect(() => {
     if (!lobby) return
-    getPlayersForLobby(lobby.id).then(setPlayers)
+    getPlayersForLobby(lobby.id).then(ps => {
+      setPlayers(ps)
+      if (ps.length > 0) {
+        getPowerScores(ps.map(p => p.id)).then(setPowerScores)
+      }
+    })
     if (lobby.weapon_set_id) getWeaponsForLobby(lobby.weapon_set_id).then(setWeapons)
     getBrackets(lobby.id).then(setBrackets)
   }, [lobby?.id])
@@ -62,6 +89,9 @@ export function MatchPage() {
   const p2 = players.find(p => p.id === openMatch?.player2_id)
   const w1 = weapons.find(w => w.id === openMatch?.weapon1_id)
   const w2 = weapons.find(w => w.id === openMatch?.weapon2_id)
+
+  const p1Score = powerScores.find(s => s.player_id === p1?.id)
+  const p2Score = powerScores.find(s => s.player_id === p2?.id)
 
   const matchVotes  = votes.filter(v => v.bracket_id === openMatch?.id)
   const myVote      = matchVotes.find(v => v.voter_id === me?.id)
@@ -166,6 +196,7 @@ export function MatchPage() {
           {p1 && <PlayerAvatar player={p1} size="xl" highlight="blue" />}
           <h2 className={styles.fighterName}>{p1?.name ?? 'TBD'}</h2>
           {w1 && <WeaponBadge weapon={w1} />}
+          {p1Score && <StatBars score={p1Score} side="left" />}
           <button
             className={[styles.voteBtn, myVote?.voted_for_id === p1?.id ? styles.voted : ''].join(' ')}
             disabled={!!myVote || !me}
@@ -191,6 +222,7 @@ export function MatchPage() {
           {p2 && <PlayerAvatar player={p2} size="xl" highlight="red" />}
           <h2 className={styles.fighterName}>{p2?.name ?? 'TBD'}</h2>
           {w2 && <WeaponBadge weapon={w2} />}
+          {p2Score && <StatBars score={p2Score} side="right" />}
           <button
             className={[styles.voteBtn, styles.voteBtnRed, myVote?.voted_for_id === p2?.id ? styles.voted : ''].join(' ')}
             disabled={!!myVote || !me}

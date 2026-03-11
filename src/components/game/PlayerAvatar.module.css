@@ -93,3 +93,8 @@
   from { transform: scale(2); opacity: 0; }
   to   { transform: scale(1); opacity: 1; }
 }
+
+@media (max-width: 640px) {
+  .xl { --sz: 80px; }
+  .lg { --sz: 64px; }
+}
