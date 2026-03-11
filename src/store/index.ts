@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { saveLobbyId, clearLobbyId } from '../lib/session'
 import type { Lobby, Player, BracketMatch, Vote, Rating, PlayerPowerScore, Weapon } from '../types/game'
 
 export type Lang = 'en' | 'es'
@@ -72,7 +73,11 @@ export const useGameStore = create<GameStore>((set) => ({
 
   ...initialState,
 
-  setLobby: (lobby) => set({ lobby }),
+  setLobby: (lobby) => {
+    if (lobby) saveLobbyId(lobby.id)
+    else clearLobbyId()
+    set({ lobby })
+  },
 
   setPlayers: (players) => set({ players }),
   upsertPlayer: (player) => set(state => {

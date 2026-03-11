@@ -2,6 +2,8 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useGameStore } from '../store'
+import { getSavedLobbyId } from '../lib/session'
+import { getLobbyById } from '../services/lobbyService'
 import type { Lobby, Player, Rating, BracketMatch, Vote, LobbyEvent } from '../types/game'
 
 export function useLobbyRealtime(lobbyId: string | null) {
@@ -11,14 +13,25 @@ export function useLobbyRealtime(lobbyId: string | null) {
     lobby,
   } = useGameStore()
 
+  // Resolve effective lobby ID: prop first, then localStorage fallback (survives F5)
+  const effectiveLobbyId = lobbyId ?? getSavedLobbyId()
+
+  // Bootstrap lobby from DB if store is empty after a page refresh
   useEffect(() => {
-    if (!lobbyId) return
+    if (lobby || !effectiveLobbyId) return
+    getLobbyById(effectiveLobbyId).then(l => {
+      if (l) setLobby(l)
+    })
+  }, [effectiveLobbyId])
+
+  useEffect(() => {
+    if (!effectiveLobbyId) return
 
     const channel = supabase
-      .channel(`lobby:${lobbyId}`)
+      .channel(`lobby:${effectiveLobbyId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'lobbies', filter: `id=eq.${lobbyId}` },
+        { event: '*', schema: 'public', table: 'lobbies', filter: `id=eq.${effectiveLobbyId}` },
         (payload) => {
           const updated = payload.new as Lobby
           setLobby(updated)
@@ -30,7 +43,7 @@ export function useLobbyRealtime(lobbyId: string | null) {
         { event: '*', schema: 'public', table: 'players' },
         (payload) => {
           const player = payload.new as Player
-          if (player?.lobby_id === lobbyId) upsertPlayer(player)
+          if (player?.lobby_id === effectiveLobbyId) upsertPlayer(player)
         }
       )
       .on(
@@ -38,7 +51,7 @@ export function useLobbyRealtime(lobbyId: string | null) {
         { event: '*', schema: 'public', table: 'ratings' },
         (payload) => {
           const rating = payload.new as Rating
-          if (rating?.lobby_id === lobbyId) upsertRating(rating)
+          if (rating?.lobby_id === effectiveLobbyId) upsertRating(rating)
         }
       )
       .on(
@@ -46,7 +59,7 @@ export function useLobbyRealtime(lobbyId: string | null) {
         { event: '*', schema: 'public', table: 'brackets' },
         (payload) => {
           const bracket = payload.new as BracketMatch
-          if (bracket?.lobby_id === lobbyId) upsertBracket(bracket)
+          if (bracket?.lobby_id === effectiveLobbyId) upsertBracket(bracket)
         }
       )
       .on(
@@ -62,13 +75,13 @@ export function useLobbyRealtime(lobbyId: string | null) {
         { event: 'INSERT', schema: 'public', table: 'lobby_events' },
         (_payload) => {
           const event = _payload.new as LobbyEvent
-          if (event?.lobby_id === lobbyId) console.log('[lobby_event]', event.event_type, event.payload)
+          if (event?.lobby_id === effectiveLobbyId) console.log('[lobby_event]', event.event_type, event.payload)
         }
       )
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [lobbyId])
+  }, [effectiveLobbyId])
 
   // Also navigate if lobby status changed before subscribe
   useEffect(() => {
