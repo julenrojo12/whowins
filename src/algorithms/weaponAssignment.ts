@@ -3,7 +3,13 @@ import { shuffle } from '../lib/utils'
 
 /**
  * Inverse balance: stronger player gets lower danger weapon, weaker gets higher danger.
- * dangerBudget = floor(gap × weaponCount)
+ *
+ * Logic: sort weapons by danger ASC and split at the midpoint.
+ *   - gap=0 (equal scores)  → stronger draws from lower half, weaker from upper half
+ *   - gap=1 (max difference) → stronger gets the safest weapon, weaker gets the most dangerous
+ *
+ * The gap pushes each pool toward the extremes proportionally, so evenly-matched
+ * fighters get weapons of similar danger and mismatched fighters get opposite extremes.
  */
 export function assignWeaponsToMatches(
   matches: BracketMatch[],
@@ -21,15 +27,21 @@ export function assignWeaponsToMatches(
     const p1Score = scoreMap.get(match.player1_id) ?? 50
     const p2Score = scoreMap.get(match.player2_id) ?? 50
 
-    const gap = Math.abs(p1Score - p2Score) / 100
-    const budget = Math.max(1, Math.floor(gap * n))
+    const gap = Math.abs(p1Score - p2Score) / 100  // 0..1
+    const mid = Math.floor(n / 2)
+    const offset = Math.round(gap * mid)
 
-    // Shuffle the buckets for randomness
-    const lowDanger  = shuffle(sorted.slice(0, budget))
-    const highDanger = shuffle(sorted.slice(Math.max(0, n - budget)))
+    // Stronger player: pool from the safest weapons (index 0 → mid-offset)
+    // Weaker player:   pool from the most dangerous weapons (mid+offset → n-1)
+    const strongerPoolEnd = Math.max(1, mid - offset)
+    const weakerPoolStart = Math.min(n - 1, mid + offset)
 
-    const strongerWeapon = lowDanger[0]  || sorted[0]
-    const weakerWeapon   = highDanger[0] || sorted[n - 1]
+    const strongerPool = shuffle(sorted.slice(0, strongerPoolEnd))
+    const weakerPool   = shuffle(sorted.slice(weakerPoolStart))
+
+    const strongerWeapon = strongerPool[0] ?? sorted[0]
+    // Avoid assigning the same weapon to both fighters
+    const weakerWeapon   = weakerPool.find(w => w.id !== strongerWeapon.id) ?? sorted[n - 1]
 
     const p1Stronger = p1Score >= p2Score
 
