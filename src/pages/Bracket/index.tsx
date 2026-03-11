@@ -98,7 +98,7 @@ export function BracketPage() {
         )}
 
         <div className={styles.bracket}>
-          {rounds.map(round => (
+          {[nextRound].filter(round => byRound[round]).map(round => (
             <div key={round} className={styles.round}>
               <h3 className={styles.roundTitle}>
                 {isFinalRound(round) ? t('bracket.final') : t('bracket.round', { n: round })}
