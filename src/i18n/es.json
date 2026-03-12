@@ -57,6 +57,8 @@
   "bracket.startRound": "INICIAR RONDA {n}",
   "bracket.startFinal": "INICIAR FINAL",
   "bracket.waitingHost": "Esperando al host para iniciar la siguiente ronda...",
+  "bracket.preparingRound": "Preparando siguiente ronda...",
+  "bracket.startError": "No se pudo iniciar la ronda. Por favor, inténtalo de nuevo.",
   "bracket.tbd": "POR DEF.",
   "bracket.winner": "GANADOR",
 

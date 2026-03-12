@@ -57,6 +57,8 @@
   "bracket.startRound": "START ROUND {n}",
   "bracket.startFinal": "START FINAL",
   "bracket.waitingHost": "Waiting for host to start next round...",
+  "bracket.preparingRound": "Preparing next round...",
+  "bracket.startError": "Could not start round. Please try again.",
   "bracket.tbd": "TBD",
   "bracket.winner": "WINNER",
 

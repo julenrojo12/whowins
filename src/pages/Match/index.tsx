@@ -260,7 +260,8 @@ export function MatchPage() {
           setActiveMatchId(nextMatch.id)
           await emitLobbyEvent(lobby.id, 'match_opened', { match_id: nextMatch.id })
         } else {
-          await updateLobbyStatus(lobby.id, 'between_rounds')
+          // Fallback: no pending match found but round not fully closed — advance anyway
+          await updateLobbyStatus(lobby.id, 'between_rounds', currentRound + 1)
           await emitLobbyEvent(lobby.id, 'match_closed', { match_id: openMatch.id })
         }
       }
