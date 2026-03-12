@@ -22,14 +22,19 @@ export function BracketPage() {
   useLobbyMusic('battle')
   const t = useT()
 
-  const [starting, setStarting] = useState(false)
+  const [starting, setStarting]   = useState(false)
+  const [loading, setLoading]     = useState(false)
+  const [startError, setStartError] = useState(false)
 
   useEffect(() => {
     if (!lobby) return
-    getBrackets(lobby.id).then(setBrackets)
-    getPlayersForLobby(lobby.id).then(setPlayers)
-    if (lobby.weapon_set_id) getWeaponsForLobby(lobby.weapon_set_id).then(setWeapons)
-  }, [lobby?.id])
+    setLoading(true)
+    Promise.all([
+      getBrackets(lobby.id).then(setBrackets),
+      getPlayersForLobby(lobby.id).then(setPlayers),
+      lobby.weapon_set_id ? getWeaponsForLobby(lobby.weapon_set_id).then(setWeapons) : Promise.resolve(),
+    ]).finally(() => setLoading(false))
+  }, [lobby?.id, lobby?.status])
 
   const rounds = [...new Set(brackets.map(b => b.round_number))].sort()
 
@@ -51,6 +56,7 @@ export function BracketPage() {
   async function handleStartRound() {
     if (!lobby) return
     setStarting(true)
+    setStartError(false)
     try {
       const freshBrackets = await getBrackets(lobby.id)
       setBrackets(freshBrackets)
@@ -60,12 +66,17 @@ export function BracketPage() {
         b.status === 'pending' &&
         b.player1_id && b.player2_id
       )
-      if (!firstMatch) return
+      if (!firstMatch) {
+        setStartError(true)
+        return
+      }
 
       await openMatch(firstMatch.id)
       setActiveMatchId(firstMatch.id)
       await updateLobbyStatus(lobby.id, 'voting')
       await emitLobbyEvent(lobby.id, 'match_opened', { match_id: firstMatch.id })
+    } catch {
+      setStartError(true)
     } finally {
       setStarting(false)
     }
@@ -84,14 +95,34 @@ export function BracketPage() {
     <div className={styles.page}>
       <ArcadeFrame title={t('bracket.title')}>
         {/* Host start-round button */}
-        {canStartRound && (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '0 0 var(--space-lg)' }}>
+        {isHost && canStartRound && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-sm)', padding: '0 0 var(--space-lg)' }}>
             <ArcadeButton variant="red" size="lg" loading={starting} onClick={handleStartRound}>
               {isFinalRound(nextRound) ? t('bracket.startFinal') : t('bracket.startRound', { n: nextRound })}
             </ArcadeButton>
+            {startError && (
+              <p className="text-ui" style={{ color: 'var(--color-primary)', fontSize: '0.9rem' }}>
+                {t('bracket.startError')}
+              </p>
+            )}
           </div>
         )}
-        {!canStartRound && !isHost && (
+        {isHost && !canStartRound && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-sm)', padding: '0 0 var(--space-lg)' }}>
+            {loading
+              ? <p className="text-ui text-dim text-center">{t('bracket.preparingRound')}</p>
+              : <ArcadeButton variant="red" size="lg" loading={starting} onClick={handleStartRound}>
+                  {isFinalRound(nextRound) ? t('bracket.startFinal') : t('bracket.startRound', { n: nextRound })}
+                </ArcadeButton>
+            }
+            {startError && !loading && (
+              <p className="text-ui" style={{ color: 'var(--color-primary)', fontSize: '0.9rem' }}>
+                {t('bracket.startError')}
+              </p>
+            )}
+          </div>
+        )}
+        {!isHost && !canStartRound && (
           <p className="text-ui text-dim text-center" style={{ paddingBottom: 'var(--space-lg)' }}>
             {t('bracket.waitingHost')}
           </p>
