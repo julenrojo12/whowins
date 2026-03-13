@@ -89,8 +89,11 @@
   "results.recap": "RESUMEN DEL BRACKET",
   "results.round": "RONDA {n}",
   "results.final": "FINAL",
-  "results.playAgain": "JUGAR DE NUEVO",
+  "results.playAgain": "VOLVER AL INICIO",
   "results.vs": "vs",
+  "results.playAgainKeep": "JUGAR DE NUEVO (MANTENER ATRIBUTOS)",
+  "results.replayTitle": "SELECCIONAR SETS PARA LA REVANCHA",
+  "results.confirmReplay": "INICIAR REVANCHA",
 
   "sets.title": "GESTIONAR SETS",
   "sets.charSets": "SETS DE PERSONAJES",

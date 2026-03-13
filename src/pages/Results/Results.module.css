@@ -93,6 +93,53 @@
 .recapVs     { color: var(--color-text-dim); font-size: 0.8rem; }
 .recapResult { color: var(--color-accent-green); margin-left: auto; }
 
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  max-width: 360px;
+}
+
+.replayForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.fieldLabel {
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--color-accent-gold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.select {
+  background: var(--color-bg-alt);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-weight: 800;
+  font-size: 1rem;
+  padding: 10px 14px;
+  width: 100%;
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.select:focus {
+  border-color: var(--color-accent-gold);
+  box-shadow: 0 0 0 3px rgba(255,204,0,0.2);
+}
+
 @keyframes bounceIn {
   0%   { transform: scale(0.3); opacity: 0; }
   50%  { transform: scale(1.1); opacity: 1; }
