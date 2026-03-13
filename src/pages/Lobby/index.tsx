@@ -39,7 +39,8 @@ export function LobbyPage() {
   const [starting, setStarting]     = useState(false)
   const [copied, setCopied]         = useState(false)
   const [joinError, setJoinError]   = useState('')
-  const fileRef = useRef<HTMLInputElement>(null)
+  const fileRef   = useRef<HTMLInputElement>(null)
+  const cameraRef = useRef<HTMLInputElement>(null)
 
   // Load lobby data on mount
   useEffect(() => {
@@ -197,13 +198,26 @@ export function LobbyPage() {
             {photoPreview && (
               <img src={photoPreview} className={styles.photoPreview} alt="preview" />
             )}
-            <ArcadeButton size="sm" variant="ghost" onClick={() => fileRef.current?.click()}>
-              {photo ? t('lobby.changePhoto') : t('lobby.uploadPhoto')}
-            </ArcadeButton>
+            <div className={styles.photoButtons}>
+              <ArcadeButton size="sm" variant="ghost" onClick={() => fileRef.current?.click()}>
+                {photo ? t('lobby.changePhoto') : t('lobby.uploadPhoto')}
+              </ArcadeButton>
+              <ArcadeButton size="sm" variant="blue" onClick={() => cameraRef.current?.click()}>
+                {photo ? t('lobby.retakePhoto') : t('lobby.takePhoto')}
+              </ArcadeButton>
+            </div>
             <input
               ref={fileRef}
               type="file"
               accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handlePhotoChange}
+            />
+            <input
+              ref={cameraRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
               style={{ display: 'none' }}
               onChange={handlePhotoChange}
             />
