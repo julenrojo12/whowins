@@ -1,11 +1,11 @@
 import type { Rating, PlayerPowerScore } from '../types/game'
 
 /**
- * powerScore = ((strength×0.35 + skill×0.40 + resistance×0.25) − 1) / 4 × 100
+ * powerScore = ((strength×0.50 + skill×0.30 + resistance×0.20) − 1) / 4 × 100
  * Result: 0–100
  */
 export function calcPowerScore(strength: number, skill: number, resistance: number): number {
-  const weighted = strength * 0.35 + skill * 0.40 + resistance * 0.25
+  const weighted = strength * 0.50 + skill * 0.30 + resistance * 0.20
   return ((weighted - 1) / 4) * 100
 }
 
