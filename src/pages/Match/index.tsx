@@ -71,7 +71,9 @@ export function MatchPage() {
   useEffect(() => { closingRef.current = closing },  [closing])
   useEffect(() => { winnerRef.current = winner },    [winner])
 
-  // On mount: ensure players, weapons, brackets and power scores are loaded
+  // On mount / lobby change: ensure players, weapons, brackets and power scores are loaded.
+  // Also re-runs when lobby.status becomes 'voting' (e.g. after a game restart) so that
+  // stale brackets from the previous game are replaced with the freshly generated ones.
   useEffect(() => {
     if (!lobby) return
     getPlayersForLobby(lobby.id).then(ps => {
@@ -82,7 +84,7 @@ export function MatchPage() {
     })
     if (lobby.weapon_set_id) getWeaponsForLobby(lobby.weapon_set_id).then(setWeapons)
     getBrackets(lobby.id).then(setBrackets)
-  }, [lobby?.id])
+  }, [lobby?.id, lobby?.status])
 
   // Find the open match
   const openMatch: BracketMatch | undefined = brackets.find(b => b.status === 'open')

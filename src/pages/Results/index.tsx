@@ -16,7 +16,7 @@ import type { Player, CharacterSet, WeaponSet } from '../../types/game'
 
 export function ResultsPage() {
   const navigate = useNavigate()
-  const { lobby, players, brackets, setBrackets } = useGameStore()
+  const { lobby, players, brackets, setBrackets, setVotes } = useGameStore()
   const isHost = useIsHost()
   const [showWinner, setShowWinner] = useState(false)
   const [showReplay, setShowReplay] = useState(false)
@@ -56,6 +56,10 @@ export function ResultsPage() {
   async function handleReplay() {
     if (!lobby || !charSetId || !weapSetId) return
     setReplaying(true)
+    // Clear stale brackets and votes from the store before the restart so the
+    // Match page never sees leftover 'closed' matches from the previous game.
+    setBrackets([])
+    setVotes([])
     try {
       const playerIds = players.map(p => p.id)
       await replayWithAttributes(lobby.id, weapSetId, charSetId, playerIds)
