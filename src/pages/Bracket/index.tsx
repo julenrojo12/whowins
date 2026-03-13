@@ -37,6 +37,7 @@ export function BracketPage() {
   }, [lobby?.id, lobby?.status])
 
   const rounds = [...new Set(brackets.map(b => b.round_number))].sort()
+  const totalRounds = rounds.length
 
   function getPlayer(id: string | null) {
     return players.find(p => p.id === id) ?? null
@@ -48,10 +49,36 @@ export function BracketPage() {
 
   // current_round is the NEXT round to play (set by advanceWinners)
   const nextRound = lobby?.current_round ?? 1
+
   const nextRoundMatches = brackets.filter(b =>
     b.round_number === nextRound && b.status === 'pending'
   )
   const canStartRound = isHost && nextRoundMatches.length > 0
+
+  // Determine round label based on how far from the final
+  function getRoundLabel(round: number): string {
+    const stepsFromFinal = totalRounds - round
+    if (stepsFromFinal === 0) return t('bracket.final')
+    if (stepsFromFinal === 1) return t('bracket.semis')
+    if (stepsFromFinal === 2) return t('bracket.quarters')
+    return t('bracket.round', { n: round })
+  }
+
+  function getStartButtonText(): string {
+    const stepsFromFinal = totalRounds - nextRound
+    if (stepsFromFinal === 0) return t('bracket.startFinal')
+    if (stepsFromFinal === 1) return t('bracket.startSemis')
+    if (stepsFromFinal === 2) return t('bracket.startQuarters')
+    return t('bracket.startRound', { n: nextRound })
+  }
+
+  function getWaitingText(): string {
+    const stepsFromFinal = totalRounds - nextRound
+    if (stepsFromFinal === 0) return t('bracket.waitingFinal')
+    if (stepsFromFinal === 1) return t('bracket.waitingSemis')
+    if (stepsFromFinal === 2) return t('bracket.waitingQuarters')
+    return t('bracket.waitingHost')
+  }
 
   async function handleStartRound() {
     if (!lobby) return
@@ -88,8 +115,8 @@ export function BracketPage() {
     return acc
   }, {})
 
-  const totalRounds = rounds.length
-  const isFinalRound = (r: number) => r === rounds[totalRounds - 1] && totalRounds > 1
+  // Only show rounds that have already been played (results, no spoilers)
+  const completedRounds = rounds.filter(r => r < nextRound)
 
   return (
     <div className={styles.page}>
@@ -98,7 +125,7 @@ export function BracketPage() {
         {isHost && canStartRound && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-sm)', padding: '0 0 var(--space-lg)' }}>
             <ArcadeButton variant="red" size="lg" loading={starting} onClick={handleStartRound}>
-              {isFinalRound(nextRound) ? t('bracket.startFinal') : t('bracket.startRound', { n: nextRound })}
+              {getStartButtonText()}
             </ArcadeButton>
             {startError && (
               <p className="text-ui" style={{ color: 'var(--color-primary)', fontSize: '0.9rem' }}>
@@ -112,7 +139,7 @@ export function BracketPage() {
             {loading
               ? <p className="text-ui text-dim text-center">{t('bracket.preparingRound')}</p>
               : <ArcadeButton variant="red" size="lg" loading={starting} onClick={handleStartRound}>
-                  {isFinalRound(nextRound) ? t('bracket.startFinal') : t('bracket.startRound', { n: nextRound })}
+                  {getStartButtonText()}
                 </ArcadeButton>
             }
             {startError && !loading && (
@@ -122,60 +149,60 @@ export function BracketPage() {
             )}
           </div>
         )}
-        {!isHost && !canStartRound && (
+        {!isHost && (
           <p className="text-ui text-dim text-center" style={{ paddingBottom: 'var(--space-lg)' }}>
-            {t('bracket.waitingHost')}
+            {getWaitingText()}
           </p>
         )}
 
-        <div className={styles.bracket}>
-          {[nextRound].filter(round => byRound[round]).map(round => (
-            <div key={round} className={styles.round}>
-              <h3 className={styles.roundTitle}>
-                {isFinalRound(round) ? t('bracket.final') : t('bracket.round', { n: round })}
-              </h3>
-              <div className={styles.matches}>
-                {byRound[round]?.map(match => {
-                  const p1 = getPlayer(match.player1_id)
-                  const p2 = getPlayer(match.player2_id)
-                  const w1 = getWeapon(match.weapon1_id)
-                  const w2 = getWeapon(match.weapon2_id)
+        {/* Previous rounds results */}
+        {completedRounds.length > 0 && (
+          <div className={styles.bracket}>
+            {completedRounds.map(round => (
+              <div key={round} className={styles.round}>
+                <h3 className={styles.roundTitle}>{getRoundLabel(round)}</h3>
+                <div className={styles.matches}>
+                  {byRound[round]?.map(match => {
+                    const p1 = getPlayer(match.player1_id)
+                    const p2 = getPlayer(match.player2_id)
+                    const w1 = getWeapon(match.weapon1_id)
+                    const w2 = getWeapon(match.weapon2_id)
 
-                  return (
-                    <div
-                      key={match.id}
-                      className={[
-                        styles.matchCard,
-                        match.status === 'open'   ? styles.open   : '',
-                        match.status === 'closed' ? styles.closed : '',
-                      ].filter(Boolean).join(' ')}
-                    >
-                      <div className={styles.fighter}>
-                        {p1 ? <PlayerAvatar player={p1} size="sm" showName eliminated={p1.is_eliminated} /> : <span className={styles.tbd}>{t('bracket.tbd')}</span>}
-                        {w1 && <WeaponBadge weapon={w1} />}
+                    return (
+                      <div
+                        key={match.id}
+                        className={[
+                          styles.matchCard,
+                          match.status === 'closed' ? styles.closed : '',
+                        ].filter(Boolean).join(' ')}
+                      >
+                        <div className={[styles.fighter, match.winner_id === match.player1_id ? styles.winnerFighter : styles.loserFighter].filter(Boolean).join(' ')}>
+                          {p1 ? <PlayerAvatar player={p1} size="sm" showName eliminated={p1.is_eliminated} /> : <span className={styles.tbd}>{t('bracket.tbd')}</span>}
+                          {w1 && <WeaponBadge weapon={w1} />}
+                        </div>
+                        <div className={styles.vs}>
+                          {match.winner_id
+                            ? <span className="display-text-primary text-display" style={{ fontSize: 14 }}>{t('bracket.winner')}</span>
+                            : <span className={styles.vsText}>VS</span>
+                          }
+                          {match.winner_id && (
+                            <span className="text-green text-ui" style={{ fontSize: '0.9rem' }}>
+                              {getPlayer(match.winner_id)?.name}
+                            </span>
+                          )}
+                        </div>
+                        <div className={[styles.fighter, match.winner_id === match.player2_id ? styles.winnerFighter : styles.loserFighter].filter(Boolean).join(' ')}>
+                          {p2 ? <PlayerAvatar player={p2} size="sm" showName eliminated={p2.is_eliminated} /> : <span className={styles.tbd}>{t('bracket.tbd')}</span>}
+                          {w2 && <WeaponBadge weapon={w2} />}
+                        </div>
                       </div>
-                      <div className={styles.vs}>
-                        {match.status === 'closed' && match.winner_id
-                          ? <span className="display-text-primary text-display" style={{ fontSize: 14 }}>{t('bracket.winner')}</span>
-                          : <span className={styles.vsText}>VS</span>
-                        }
-                        {match.winner_id && (
-                          <span className="text-green text-ui" style={{ fontSize: '0.9rem' }}>
-                            {getPlayer(match.winner_id)?.name}
-                          </span>
-                        )}
-                      </div>
-                      <div className={styles.fighter}>
-                        {p2 ? <PlayerAvatar player={p2} size="sm" showName eliminated={p2.is_eliminated} /> : <span className={styles.tbd}>{t('bracket.tbd')}</span>}
-                        {w2 && <WeaponBadge weapon={w2} />}
-                      </div>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </ArcadeFrame>
     </div>
   )

@@ -71,6 +71,15 @@
   width: 100%;
 }
 
+.winnerFighter {
+  opacity: 1;
+}
+
+.loserFighter {
+  opacity: 0.45;
+  filter: grayscale(0.6);
+}
+
 .vs {
   display: flex;
   flex-direction: column;
