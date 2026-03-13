@@ -110,10 +110,6 @@ export function HomePage() {
             </ArcadeButton>
           </div>
 
-          <ArcadeButton size="sm" variant="ghost" onClick={() => navigate('/sets')}>
-            {t('home.manageSets')}
-          </ArcadeButton>
-
           <div className={styles.langRow}>
             <span className={styles.langLabel}>{t('home.language')}:</span>
             {(['en', 'es'] as Lang[]).map(l => (
