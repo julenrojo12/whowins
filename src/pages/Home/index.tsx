@@ -87,6 +87,7 @@ export function HomePage() {
     <div className={styles.page}>
       <div className={styles.hero}>
         <h1 className={styles.title}>WHO<br/>WINS</h1>
+        <p className={styles.edition}>SHPR EDITION</p>
       </div>
 
       <ArcadeFrame className={styles.card}>
@@ -197,6 +198,9 @@ export function HomePage() {
           </div>
         )}
       </Modal>
+      <footer className={styles.footer}>
+        <span className={styles.devSignature}>Dev Julos</span>
+      </footer>
     </div>
   )
 }
