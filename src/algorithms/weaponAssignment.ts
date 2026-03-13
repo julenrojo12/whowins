@@ -1,15 +1,16 @@
 import type { Weapon, BracketMatch, PlayerPowerScore } from '../types/game'
-import { shuffle } from '../lib/utils'
 
 /**
  * Inverse balance: stronger player gets lower danger weapon, weaker gets higher danger.
  *
- * Logic: sort weapons by danger ASC and split at the midpoint.
- *   - gap=0 (equal scores)  → stronger draws from lower half, weaker from upper half
- *   - gap=1 (max difference) → stronger gets the safest weapon, weaker gets the most dangerous
+ * Two mechanisms reduce the probability of max-danger (5-star) weapons:
  *
- * The gap pushes each pool toward the extremes proportionally, so evenly-matched
- * fighters get weapons of similar danger and mismatched fighters get opposite extremes.
+ * 1. Curved gap: the pool offset uses gap^1.5 instead of gap, so only extreme
+ *    power differences push toward the most dangerous weapons.
+ *
+ * 2. Inverse-danger weighted pick: within the weaker player's pool, weapons are
+ *    chosen with probability ∝ 1/danger_level², so higher-danger weapons are
+ *    progressively less likely to be selected.
  */
 export function assignWeaponsToMatches(
   matches: BracketMatch[],
@@ -28,20 +29,30 @@ export function assignWeaponsToMatches(
     const p2Score = scoreMap.get(match.player2_id) ?? 50
 
     const gap = Math.abs(p1Score - p2Score) / 100  // 0..1
+
+    // Apply a curve so only large gaps push toward the danger extremes.
+    // gap^1.5 examples: 0.3→0.16, 0.5→0.35, 0.8→0.72, 1.0→1.0
+    const curvedGap = Math.pow(gap, 1.5)
+
     const mid = Math.floor(n / 2)
-    const offset = Math.round(gap * mid)
+    const offset = Math.round(curvedGap * mid)
 
     // Stronger player: pool from the safest weapons (index 0 → mid-offset)
-    // Weaker player:   pool from the most dangerous weapons (mid+offset → n-1)
+    // Weaker player:   pool from the more dangerous weapons (mid+offset → n-1)
     const strongerPoolEnd = Math.max(1, mid - offset)
     const weakerPoolStart = Math.min(n - 1, mid + offset)
 
-    const strongerPool = shuffle(sorted.slice(0, strongerPoolEnd))
-    const weakerPool   = shuffle(sorted.slice(weakerPoolStart))
+    const strongerPool = sorted.slice(0, strongerPoolEnd)
+    const weakerPool   = sorted.slice(weakerPoolStart)
 
-    const strongerWeapon = strongerPool[0] ?? sorted[0]
-    // Avoid assigning the same weapon to both fighters
-    const weakerWeapon   = weakerPool.find(w => w.id !== strongerWeapon.id) ?? sorted[n - 1]
+    const strongerWeapon = strongerPool[Math.floor(Math.random() * strongerPool.length)] ?? sorted[0]
+
+    // Weighted pick for the weaker player: probability ∝ 1/danger_level²
+    // This makes 5-star weapons significantly less likely than 3-star ones.
+    const weakerWeapon = weightedDangerPick(
+      weakerPool.filter(w => w.id !== strongerWeapon.id),
+      sorted[n - 1]
+    )
 
     const p1Stronger = p1Score >= p2Score
 
@@ -53,4 +64,24 @@ export function assignWeaponsToMatches(
   }
 
   return result
+}
+
+/**
+ * Picks a weapon from the pool with probability inversely proportional to danger_level².
+ * A weapon at danger 2 is 4× more likely to be picked than one at danger 4,
+ * and 25× more likely than one at danger 10.
+ * Falls back to `fallback` if the pool is empty.
+ */
+function weightedDangerPick(pool: Weapon[], fallback: Weapon): Weapon {
+  if (pool.length === 0) return fallback
+
+  const weights = pool.map(w => 1 / (w.danger_level * w.danger_level))
+  const total = weights.reduce((a, b) => a + b, 0)
+
+  let rand = Math.random() * total
+  for (let i = 0; i < pool.length; i++) {
+    rand -= weights[i]
+    if (rand <= 0) return pool[i]
+  }
+  return pool[pool.length - 1]
 }
