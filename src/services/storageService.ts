@@ -18,9 +18,16 @@ export async function uploadPlayerPhoto(file: File, playerId: string): Promise<s
   return data.publicUrl
 }
 
+function slugify(name: string): string {
+  return name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9-_]/g, '_')
+}
+
 export async function uploadSetImage(file: File, name: string): Promise<string> {
   const ext  = file.name.split('.').pop()
-  const path = `${Date.now()}-${name}.${ext}`
+  const path = `${Date.now()}-${slugify(name)}.${ext}`
 
   const { error } = await supabase.storage
     .from(PLAYER_BUCKETS.SET_IMAGES)
