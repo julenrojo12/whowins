@@ -1,0 +1,45 @@
+.banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  padding: 10px 16px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  animation: slideDown 0.3s ease forwards;
+}
+
+.reconnecting {
+  background: var(--color-accent-gold);
+  color: #1a1200;
+  box-shadow: 0 4px 0 #b38f00;
+}
+
+.disconnected {
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: 0 4px 0 #cc3500;
+}
+
+.spinner {
+  display: inline-block;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}

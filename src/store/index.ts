@@ -53,6 +53,10 @@ interface GameStore {
   votingStartedEvent: { match_id: string; started_at: number } | null
   setVotingStartedEvent: (event: { match_id: string; started_at: number } | null) => void
 
+  // Realtime connection status
+  connectionStatus: 'connected' | 'reconnecting' | 'disconnected'
+  setConnectionStatus: (status: 'connected' | 'reconnecting' | 'disconnected') => void
+
   // Reset all game state
   resetGame: () => void
 }
@@ -67,6 +71,7 @@ const initialState = {
   weapons: [],
   activeMatchId: null,
   votingStartedEvent: null,
+  connectionStatus: 'connected' as const,
 }
 
 export const useGameStore = create<GameStore>((set) => ({
@@ -133,6 +138,7 @@ export const useGameStore = create<GameStore>((set) => ({
   setWeapons: (weapons) => set({ weapons }),
   setActiveMatchId: (activeMatchId) => set({ activeMatchId }),
   setVotingStartedEvent: (votingStartedEvent) => set({ votingStartedEvent }),
+  setConnectionStatus: (connectionStatus) => set({ connectionStatus }),
 
   resetGame: () => set(initialState),
 }))
