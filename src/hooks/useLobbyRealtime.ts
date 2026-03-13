@@ -61,6 +61,14 @@ export function useLobbyRealtime(lobbyId: string | null) {
         (payload) => {
           const updated = payload.new as Lobby
           setLobby(updated)
+          // On restart the lobby jumps from 'finished' → 'voting' without a bracket phase.
+          // Old brackets are still in the store (DELETE events don't carry payload.new).
+          // Proactively refresh so the Match page sees the new open match immediately.
+          if (updated.status === 'voting') {
+            getBrackets(id).then(bs => {
+              if (mountedRef.current) setBrackets(bs)
+            })
+          }
           handleNavigation(updated.status, navigate)
         }
       )
@@ -104,6 +112,12 @@ export function useLobbyRealtime(lobbyId: string | null) {
           if (event?.lobby_id !== id) return
           if (event.event_type === 'voting_started') {
             setVotingStartedEvent(event.payload as { match_id: string; started_at: number })
+          } else if (event.event_type === 'match_opened') {
+            // Refresh brackets so all clients see the newly opened match
+            // (critical for game restarts where old brackets were deleted and replaced)
+            getBrackets(id).then(bs => {
+              if (mountedRef.current) setBrackets(bs)
+            })
           }
         }
       )
