@@ -20,7 +20,7 @@ import { supabase } from '../../lib/supabase'
 import { useT } from '../../i18n'
 import type { BracketMatch, Player, PlayerPowerScore, LobbyEvent } from '../../types/game'
 
-const VOTING_DURATION = 10
+const VOTING_DURATION = 5
 
 function StatBars({ score, side }: { score: PlayerPowerScore; side: 'left' | 'right' }) {
   const t = useT()
