@@ -89,8 +89,11 @@
   "results.recap": "BRACKET RECAP",
   "results.round": "ROUND {n}",
   "results.final": "FINAL",
-  "results.playAgain": "PLAY AGAIN",
+  "results.playAgain": "BACK TO HOME",
   "results.vs": "vs",
+  "results.playAgainKeep": "PLAY AGAIN (KEEP ATTRIBUTES)",
+  "results.replayTitle": "SELECT SETS FOR REMATCH",
+  "results.confirmReplay": "START REMATCH",
 
   "sets.title": "MANAGE SETS",
   "sets.charSets": "CHARACTER SETS",
