@@ -30,6 +30,8 @@
   "lobby.photo": "FOTO (OPCIONAL)",
   "lobby.uploadPhoto": "SUBIR FOTO",
   "lobby.changePhoto": "CAMBIAR FOTO",
+  "lobby.takePhoto": "SACAR FOTO",
+  "lobby.retakePhoto": "REPETIR",
   "lobby.enterArena": "ENTRAR AL ARENA",
   "lobby.nameError": "Introduce tu nombre",
   "lobby.joinError": "Error al unirse. Inténtalo de nuevo.",

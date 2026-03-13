@@ -74,6 +74,12 @@
   gap: var(--space-sm);
 }
 
+.photoButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs, 8px);
+}
+
 .fieldLabel {
   font-family: var(--font-display);
   font-size: 14px;
