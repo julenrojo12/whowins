@@ -107,7 +107,7 @@ export function BracketPage() {
       // Navigate directly instead of waiting for the realtime lobby-change event.
       // This prevents the host from being stuck when the channel was not yet
       // subscribed when the 'voting' event fired (the race-condition bug).
-      navigate('/match')
+      navigate('/match', { replace: true })
     } catch {
       setStartError(true)
     } finally {
