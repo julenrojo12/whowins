@@ -125,6 +125,12 @@ export function useLobbyRealtime(lobbyId: string | null) {
         if (!mountedRef.current) return
         if (status === 'SUBSCRIBED') {
           setConnectionStatus('connected')
+          // Resync on every successful subscription to catch events that fired
+          // during the gap between channel creation and SUBSCRIBED confirmation.
+          // This is the primary fix for the "stuck on bracket page" bug: when
+          // the host clicks "Start Round" before the new channel is subscribed,
+          // the 'voting' lobby-change event is missed; resync recovers it.
+          await resync(id)
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           setConnectionStatus('reconnecting')
           // Brief wait before rebuilding to avoid hot-loop on a still-broken network
