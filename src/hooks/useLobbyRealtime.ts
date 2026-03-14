@@ -118,6 +118,15 @@ export function useLobbyRealtime(lobbyId: string | null) {
             getBrackets(id).then(bs => {
               if (mountedRef.current) setBrackets(bs)
             })
+          } else if (event.event_type === 'round_complete') {
+            // Supabase Realtime doesn't guarantee cross-table event ordering:
+            // the `lobbies` between_rounds event can arrive before the `brackets`
+            // update events from advanceWinners, leaving stale brackets in the
+            // store. Proactively refresh so the Bracket page has the correct
+            // player/weapon assignments for the next round.
+            getBrackets(id).then(bs => {
+              if (mountedRef.current) setBrackets(bs)
+            })
           }
         }
       )
@@ -194,11 +203,17 @@ export function useLobbyRealtime(lobbyId: string | null) {
 }
 
 function handleNavigation(status: string, navigate: ReturnType<typeof useNavigate>) {
+  // Use replace:true for all game-state-driven navigations.
+  // This prevents history-stack pollution when the hook fires navigate()
+  // multiple times in quick succession (realtime handler + useEffect +
+  // resync all independently call handleNavigation).  Without replace the
+  // history accumulates duplicate /bracket entries, so users have to hit
+  // Back several times to escape — the original "stuck on between_rounds" bug.
   switch (status) {
-    case 'rating':         navigate('/rate');    break
-    case 'bracket':        navigate('/bracket'); break
-    case 'voting':         navigate('/match');   break
-    case 'between_rounds': navigate('/bracket'); break
-    case 'finished':       navigate('/results'); break
+    case 'rating':         navigate('/rate',    { replace: true }); break
+    case 'bracket':        navigate('/bracket', { replace: true }); break
+    case 'voting':         navigate('/match',   { replace: true }); break
+    case 'between_rounds': navigate('/bracket', { replace: true }); break
+    case 'finished':       navigate('/results', { replace: true }); break
   }
 }
