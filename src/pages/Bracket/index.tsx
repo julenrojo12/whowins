@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import styles from './Bracket.module.css'
 import { ArcadeButton } from '../../components/ui/ArcadeButton'
 import { ArcadeFrame } from '../../components/layout/ArcadeFrame'
@@ -16,6 +17,7 @@ import { useT } from '../../i18n'
 import type { BracketMatch } from '../../types/game'
 
 export function BracketPage() {
+  const navigate  = useNavigate()
   const isHost    = useIsHost()
   const { lobby, players, setPlayers, brackets, setBrackets, weapons, setWeapons, setActiveMatchId } = useGameStore()
   useLobbyRealtime(lobby?.id ?? null)
@@ -102,6 +104,10 @@ export function BracketPage() {
       setActiveMatchId(firstMatch.id)
       await updateLobbyStatus(lobby.id, 'voting')
       await emitLobbyEvent(lobby.id, 'match_opened', { match_id: firstMatch.id })
+      // Navigate directly instead of waiting for the realtime lobby-change event.
+      // This prevents the host from being stuck when the channel was not yet
+      // subscribed when the 'voting' event fired (the race-condition bug).
+      navigate('/match')
     } catch {
       setStartError(true)
     } finally {
