@@ -7,6 +7,7 @@
   "home.format": "FORMATO",
   "home.characterSet": "SET DE PERSONAJES",
   "home.weaponSet": "SET DE ARMAS",
+  "home.allWeapons": "TODAS LAS ARMAS",
   "home.loadingSets": "Cargando sets...",
   "home.noCharSets": "Sin sets de personajes.",
   "home.createOne": "Crea uno",

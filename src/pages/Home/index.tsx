@@ -35,7 +35,7 @@ export function HomePage() {
   const [charSets, setCharSets]         = useState<CharacterSet[]>([])
   const [weapSets, setWeapSets]         = useState<WeaponSet[]>([])
   const [charSetId, setCharSetId]       = useState('')
-  const [weapSetId, setWeapSetId]       = useState('')
+  const [weapSetId, setWeapSetId]       = useState('') // '' = all weapons
   const [loadingSets, setLoadingSets]   = useState(false)
 
   async function openCreate() {
@@ -46,17 +46,17 @@ export function HomePage() {
       setCharSets(cs)
       setWeapSets(ws)
       if (cs.length) setCharSetId(cs[0].id)
-      if (ws.length) setWeapSetId(ws[0].id)
+      // Keep '' (all weapons) as default; don't force-select a specific set
     } finally {
       setLoadingSets(false)
     }
   }
 
   async function handleCreate() {
-    if (!charSetId || !weapSetId) return
+    if (!charSetId) return
     setCreating(true)
     try {
-      const lobby = await createLobby(sessionId, format, charSetId, weapSetId)
+      const lobby = await createLobby(sessionId, format, charSetId, weapSetId || null)
       setLobby(lobby)
       navigate(`/lobby/${lobby.code}`)
     } catch (e) {
@@ -168,13 +168,18 @@ export function HomePage() {
             <div className={styles.field}>
               <label className={styles.fieldLabel}>{t('home.weaponSet')}</label>
               {weapSets.length === 0
-                ? <p className="text-dim text-ui">{t('home.noWeapSets')} <a onClick={() => navigate('/sets')}>{t('home.createOne')}</a></p>
+                ? (
+                  <select className={styles.select} value="" disabled>
+                    <option value="">{t('home.allWeapons')}</option>
+                  </select>
+                )
                 : (
                   <select
                     className={styles.select}
                     value={weapSetId}
                     onChange={e => setWeapSetId(e.target.value)}
                   >
+                    <option value="">{t('home.allWeapons')}</option>
                     {weapSets.map(ws => (
                       <option key={ws.id} value={ws.id}>{ws.name}</option>
                     ))}
@@ -186,7 +191,7 @@ export function HomePage() {
             <ArcadeButton
               variant="yellow"
               loading={creating}
-              disabled={!charSetId || !weapSetId}
+              disabled={!charSetId}
               onClick={handleCreate}
             >
               {t('home.createLobbyBtn')}
