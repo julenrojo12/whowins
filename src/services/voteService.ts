@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase'
-import type { Vote } from '../types/game'
+import type { Vote, BracketMatch } from '../types/game'
 
 export async function castVote(
   bracketId: string,
@@ -64,4 +64,28 @@ export function determineWinner(
   const p2    = tally[player2Id] ?? 0
   if (p1 >= p2) return player1Id
   return player2Id
+}
+
+/**
+ * 2v2 winner determination.
+ * Votes are cast for the team representative (player1_id = Team A, player2_id = Team B).
+ * Returns: winning pair (winner + partner) and losing pair (loser1 + loser2).
+ */
+export function determineWinner2v2(
+  votes: Vote[],
+  match: BracketMatch
+): { winnerId: string; partnerId: string; loserId1: string; loserId2: string } {
+  const p1Id = match.player1_id!
+  const p2Id = match.player2_id!
+  const p3Id = match.player3_id!
+  const p4Id = match.player4_id!
+
+  const tally = tallyVotes(votes)
+  const teamAVotes = tally[p1Id] ?? 0
+  const teamBVotes = tally[p2Id] ?? 0
+
+  if (teamAVotes >= teamBVotes) {
+    return { winnerId: p1Id, partnerId: p3Id, loserId1: p2Id, loserId2: p4Id }
+  }
+  return { winnerId: p2Id, partnerId: p4Id, loserId1: p1Id, loserId2: p3Id }
 }

@@ -27,11 +27,19 @@ export interface Weapon {
   created_at: string
 }
 
+export interface Team {
+  id: string
+  lobby_id: string
+  team_slot: number
+  created_at: string
+}
+
 export interface Lobby {
   id: string
   code: string
   host_session_id: string
   format: number
+  battle_mode: '1v1' | '2v2'
   character_set_id: string | null
   weapon_set_id: string | null
   status: string
@@ -48,6 +56,7 @@ export interface Player {
   photo_url: string | null
   slot_number: number
   is_eliminated: boolean
+  team_id: string | null
   created_at: string
 }
 
@@ -78,8 +87,12 @@ export interface BracketMatch {
   match_number: number
   player1_id: string | null
   player2_id: string | null
+  player3_id: string | null  // 2v2: team A second member
+  player4_id: string | null  // 2v2: team B second member
   weapon1_id: string | null
   weapon2_id: string | null
+  weapon3_id: string | null  // 2v2: team A second member's weapon
+  weapon4_id: string | null  // 2v2: team B second member's weapon
   status: string
   winner_id: string | null
   created_at: string
@@ -109,6 +122,10 @@ export interface PlayerWithScore extends Player {
 export interface MatchWithPlayers extends BracketMatch {
   player1?: Player | null
   player2?: Player | null
+  player3?: Player | null
+  player4?: Player | null
   weapon1?: Weapon | null
   weapon2?: Weapon | null
+  weapon3?: Weapon | null
+  weapon4?: Weapon | null
 }

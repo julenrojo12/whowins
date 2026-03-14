@@ -4,8 +4,8 @@ import { ArcadeButton } from '../../components/ui/ArcadeButton'
 import { ArcadeFrame } from '../../components/layout/ArcadeFrame'
 import { PlayerAvatar } from '../../components/game/PlayerAvatar'
 import { WeaponBadge } from '../../components/game/WeaponBadge'
-import { castVote, getVotesForBracket, determineWinner } from '../../services/voteService'
-import { closeMatch, getBrackets, advanceWinners, openMatch as openBracketMatch } from '../../services/bracketService'
+import { castVote, getVotesForBracket, determineWinner, determineWinner2v2 } from '../../services/voteService'
+import { closeMatch, getBrackets, advanceWinners, advanceWinners2v2, openMatch as openBracketMatch } from '../../services/bracketService'
 import { eliminatePlayer, getPlayersForLobby } from '../../services/playerService'
 import { updateLobbyStatus, emitLobbyEvent } from '../../services/lobbyService'
 import { getPowerScores } from '../../services/bracketService'
@@ -58,6 +58,7 @@ export function MatchPage() {
   const [showFight, setShowFight]       = useState(false)
   const [closing, setClosing]           = useState(false)
   const [winner, setWinner]             = useState<Player | null>(null)
+  const [winnerTeam, setWinnerTeam]     = useState<'A' | 'B' | null>(null)
   const [votingStarted, setVotingStarted] = useState(false)
   const [countdown, setCountdown]       = useState<number | null>(null)
 
@@ -67,9 +68,11 @@ export function MatchPage() {
   const isHostRef         = useRef(isHost)
   const closingRef        = useRef(closing)
   const winnerRef         = useRef(winner)
-  useEffect(() => { isHostRef.current = isHost },   [isHost])
-  useEffect(() => { closingRef.current = closing },  [closing])
-  useEffect(() => { winnerRef.current = winner },    [winner])
+  const winnerTeamRef     = useRef(winnerTeam)
+  useEffect(() => { isHostRef.current = isHost },         [isHost])
+  useEffect(() => { closingRef.current = closing },       [closing])
+  useEffect(() => { winnerRef.current = winner },         [winner])
+  useEffect(() => { winnerTeamRef.current = winnerTeam }, [winnerTeam])
 
   // On mount / lobby change: ensure players, weapons, brackets and power scores are loaded.
   // Also re-runs when lobby.status becomes 'voting' (e.g. after a game restart) so that
@@ -106,7 +109,7 @@ export function MatchPage() {
       setCountdown(n)
       sfx.countdown(n)
       if (n <= 0) {
-        if (isHostRef.current && !autoClosedRef.current && !closingRef.current && !winnerRef.current) {
+        if (isHostRef.current && !autoClosedRef.current && !closingRef.current && !winnerRef.current && !winnerTeamRef.current) {
           autoClosedRef.current = true
           handleCloseMatch()
         }
@@ -127,6 +130,7 @@ export function MatchPage() {
     setActiveMatchId(openMatch.id)
     setShowFight(false)
     setWinner(null)
+    setWinnerTeam(null)
     setVotingStartedEvent(null)
     sfx.vsSlam()
     setTimeout(() => setShowFight(true), 1000)
@@ -174,14 +178,22 @@ export function MatchPage() {
   // Cleanup timer on unmount
   useEffect(() => () => clearCountdownTimer(), [])
 
+  const is2v2 = lobby?.battle_mode === '2v2'
+
   const me = players.find(p => p.session_id === sessionId)
   const p1 = players.find(p => p.id === openMatch?.player1_id)
   const p2 = players.find(p => p.id === openMatch?.player2_id)
+  const p3 = players.find(p => p.id === openMatch?.player3_id)  // 2v2: team A second
+  const p4 = players.find(p => p.id === openMatch?.player4_id)  // 2v2: team B second
   const w1 = weapons.find(w => w.id === openMatch?.weapon1_id)
   const w2 = weapons.find(w => w.id === openMatch?.weapon2_id)
+  const w3 = weapons.find(w => w.id === openMatch?.weapon3_id)
+  const w4 = weapons.find(w => w.id === openMatch?.weapon4_id)
 
   const p1Score = powerScores.find(s => s.player_id === p1?.id)
   const p2Score = powerScores.find(s => s.player_id === p2?.id)
+  const p3Score = powerScores.find(s => s.player_id === p3?.id)
+  const p4Score = powerScores.find(s => s.player_id === p4?.id)
 
   const matchVotes  = votes.filter(v => v.bracket_id === openMatch?.id)
   const myVote      = matchVotes.find(v => v.voter_id === me?.id)
@@ -211,18 +223,30 @@ export function MatchPage() {
     sfx.matchClose()
     try {
       const freshVotes = await getVotesForBracket(openMatch.id)
-      const winnerId   = openMatch.player1_id && openMatch.player2_id
-        ? determineWinner(freshVotes, openMatch.player1_id, openMatch.player2_id)
-        : openMatch.player1_id ?? ''
 
-      const loserId = winnerId === openMatch.player1_id ? openMatch.player2_id : openMatch.player1_id
+      let winnerId: string
+      let loserIds: string[]
 
-      await closeMatch(openMatch.id, winnerId)
-      if (loserId) await eliminatePlayer(loserId)
+      if (is2v2 && openMatch.player3_id && openMatch.player4_id) {
+        const result = determineWinner2v2(freshVotes, openMatch)
+        winnerId = result.winnerId
+        loserIds = [result.loserId1, result.loserId2]
+        await closeMatch(openMatch.id, winnerId)
+        for (const loserId of loserIds) await eliminatePlayer(loserId)
+        const winnerTeamLabel = winnerId === openMatch.player1_id ? 'A' : 'B'
+        setWinnerTeam(winnerTeamLabel)
+      } else {
+        winnerId = openMatch.player1_id && openMatch.player2_id
+          ? determineWinner(freshVotes, openMatch.player1_id, openMatch.player2_id)
+          : openMatch.player1_id ?? ''
+        const loserId = winnerId === openMatch.player1_id ? openMatch.player2_id : openMatch.player1_id
+        await closeMatch(openMatch.id, winnerId)
+        if (loserId) await eliminatePlayer(loserId)
+        const winnerPlayer = players.find(p => p.id === winnerId) ?? null
+        setWinner(winnerPlayer)
+      }
+
       sfx.knockout()
-
-      const winnerPlayer = players.find(p => p.id === winnerId) ?? null
-      setWinner(winnerPlayer)
 
       // Check if round is complete
       const allBrackets  = await getBrackets(lobby.id)
@@ -246,7 +270,11 @@ export function MatchPage() {
             ? weapons
             : await getWeaponsForLobby(lobby.weapon_set_id)
 
-          await advanceWinners(lobby.id, currentRound, scores, weaponList)
+          if (is2v2) {
+            await advanceWinners2v2(lobby.id, currentRound, scores, weaponList)
+          } else {
+            await advanceWinners(lobby.id, currentRound, scores, weaponList)
+          }
           await updateLobbyStatus(lobby.id, 'between_rounds', currentRound + 1)
           await emitLobbyEvent(lobby.id, 'round_complete', { next_round: currentRound + 1 })
         }
@@ -270,7 +298,11 @@ export function MatchPage() {
           const weaponList = weapons.length > 0
             ? weapons
             : await getWeaponsForLobby(lobby.weapon_set_id)
-          await advanceWinners(lobby.id, currentRound, scores, weaponList)
+          if (is2v2) {
+            await advanceWinners2v2(lobby.id, currentRound, scores, weaponList)
+          } else {
+            await advanceWinners(lobby.id, currentRound, scores, weaponList)
+          }
           await updateLobbyStatus(lobby.id, 'between_rounds', currentRound + 1)
           await emitLobbyEvent(lobby.id, 'round_complete', { next_round: currentRound + 1 })
         }
@@ -302,18 +334,28 @@ export function MatchPage() {
       )}
 
       <div className={styles.vsContainer}>
-        {/* Fighter 1 */}
+        {/* Team A / Fighter 1 side */}
         <div className={[styles.fighter, styles.fighter1].join(' ')}>
+          {is2v2 && <h3 className={styles.teamLabel}>{t('match.teamA')}</h3>}
           {p1 && <PlayerAvatar player={p1} size="xl" highlight="blue" />}
           <h2 className={styles.fighterName}>{p1?.name ?? 'TBD'}</h2>
           {w1 && <WeaponBadge weapon={w1} />}
           {p1Score && <StatBars score={p1Score} side="left" />}
+          {/* 2v2: second team member */}
+          {is2v2 && p3 && (
+            <div className={styles.teamMate}>
+              <PlayerAvatar player={p3} size="lg" highlight="blue" />
+              <span className={styles.fighterName}>{p3.name}</span>
+              {w3 && <WeaponBadge weapon={w3} />}
+              {p3Score && <StatBars score={p3Score} side="left" />}
+            </div>
+          )}
           <button
             className={[styles.voteBtn, myVote?.voted_for_id === p1?.id ? styles.voted : ''].join(' ')}
             disabled={votingDisabled}
             onClick={() => p1 && handleVote(p1.id)}
           >
-            {t('match.vote', { n: p1Votes })}
+            {is2v2 ? t('match.voteTeamA', { n: p1Votes }) : t('match.vote', { n: p1Votes })}
           </button>
         </div>
 
@@ -322,7 +364,7 @@ export function MatchPage() {
           <span className={styles.vsLabel}>{t('match.vs')}</span>
 
           {/* Countdown or waiting message */}
-          {!winner && countdown !== null && (
+          {!winner && !winnerTeam && countdown !== null && (
             <span
               key={countdown}
               className={[
@@ -333,7 +375,7 @@ export function MatchPage() {
               {countdown === 0 ? t('match.timeUp') : countdown}
             </span>
           )}
-          {!winner && !votingStarted && (
+          {!winner && !winnerTeam && !votingStarted && (
             <span className={styles.waitingVoting}>
               {t('match.waitingVoting')}
             </span>
@@ -347,25 +389,40 @@ export function MatchPage() {
           {myVote && <span className="text-green text-ui">{t('match.voted')}</span>}
         </div>
 
-        {/* Fighter 2 */}
+        {/* Team B / Fighter 2 side */}
         <div className={[styles.fighter, styles.fighter2].join(' ')}>
+          {is2v2 && <h3 className={styles.teamLabel}>{t('match.teamB')}</h3>}
           {p2 && <PlayerAvatar player={p2} size="xl" highlight="red" />}
           <h2 className={styles.fighterName}>{p2?.name ?? 'TBD'}</h2>
           {w2 && <WeaponBadge weapon={w2} />}
           {p2Score && <StatBars score={p2Score} side="right" />}
+          {/* 2v2: second team member */}
+          {is2v2 && p4 && (
+            <div className={styles.teamMate}>
+              <PlayerAvatar player={p4} size="lg" highlight="red" />
+              <span className={styles.fighterName}>{p4.name}</span>
+              {w4 && <WeaponBadge weapon={w4} />}
+              {p4Score && <StatBars score={p4Score} side="right" />}
+            </div>
+          )}
           <button
             className={[styles.voteBtn, styles.voteBtnRed, myVote?.voted_for_id === p2?.id ? styles.voted : ''].join(' ')}
             disabled={votingDisabled}
             onClick={() => p2 && handleVote(p2.id)}
           >
-            {t('match.vote', { n: p2Votes })}
+            {is2v2 ? t('match.voteTeamB', { n: p2Votes }) : t('match.vote', { n: p2Votes })}
           </button>
         </div>
       </div>
 
-      {winner && (
+      {winner && !is2v2 && (
         <div className={styles.winnerBanner}>
           <span className={styles.winnerText}>{t('match.winner', { name: winner.name })}</span>
+        </div>
+      )}
+      {winnerTeam && is2v2 && (
+        <div className={styles.winnerBanner}>
+          <span className={styles.winnerText}>{t('match.teamWinner', { team: winnerTeam })}</span>
         </div>
       )}
 

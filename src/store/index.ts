@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { saveLobbyId, clearLobbyId } from '../lib/session'
-import type { Lobby, Player, BracketMatch, Vote, Rating, PlayerPowerScore, Weapon } from '../types/game'
+import type { Lobby, Player, BracketMatch, Vote, Rating, PlayerPowerScore, Weapon, Team } from '../types/game'
 
 export type Lang = 'en' | 'es'
 
@@ -53,6 +53,10 @@ interface GameStore {
   votingStartedEvent: { match_id: string; started_at: number } | null
   setVotingStartedEvent: (event: { match_id: string; started_at: number } | null) => void
 
+  // Teams (2v2 mode)
+  teams: Team[]
+  setTeams: (teams: Team[]) => void
+
   // Realtime connection status
   connectionStatus: 'connected' | 'reconnecting' | 'disconnected'
   setConnectionStatus: (status: 'connected' | 'reconnecting' | 'disconnected') => void
@@ -69,6 +73,7 @@ const initialState = {
   brackets: [],
   votes: [],
   weapons: [],
+  teams: [] as Team[],
   activeMatchId: null,
   votingStartedEvent: null,
   connectionStatus: 'connected' as const,
@@ -136,6 +141,7 @@ export const useGameStore = create<GameStore>((set) => ({
   }),
 
   setWeapons: (weapons) => set({ weapons }),
+  setTeams: (teams) => set({ teams }),
   setActiveMatchId: (activeMatchId) => set({ activeMatchId }),
   setVotingStartedEvent: (votingStartedEvent) => set({ votingStartedEvent }),
   setConnectionStatus: (connectionStatus) => set({ connectionStatus }),

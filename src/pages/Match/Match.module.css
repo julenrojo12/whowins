@@ -146,6 +146,27 @@
   text-align: right;
 }
 
+/* ── 2v2 team label ──────────────────────────────────────── */
+.teamLabel {
+  font-family: var(--font-display);
+  font-size: clamp(14px, 2vw, 20px);
+  color: var(--color-accent-gold);
+  text-shadow: var(--shadow-display);
+  letter-spacing: 0.06em;
+  margin: 0;
+}
+
+/* ── 2v2 second team member ──────────────────────────────── */
+.teamMate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-border);
+  width: 100%;
+}
+
 /* ── Vote button ─────────────────────────────────────────── */
 .voteBtn {
   background: var(--color-secondary);
