@@ -88,6 +88,14 @@ export async function deleteWeapon(id: string): Promise<void> {
   if (error) throw error
 }
 
-export async function getWeaponsForLobby(weaponSetId: string): Promise<Weapon[]> {
+export async function getAllWeapons(): Promise<Weapon[]> {
+  const { data, error } = await supabase
+    .from('weapons').select().order('danger_level')
+  if (error) throw error
+  return (data as Weapon[]) ?? []
+}
+
+export async function getWeaponsForLobby(weaponSetId: string | null): Promise<Weapon[]> {
+  if (!weaponSetId) return getAllWeapons()
   return getWeaponsForSet(weaponSetId)
 }

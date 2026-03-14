@@ -82,7 +82,7 @@ export function MatchPage() {
         getPowerScores(ps.map(p => p.id)).then(setPowerScores)
       }
     })
-    if (lobby.weapon_set_id) getWeaponsForLobby(lobby.weapon_set_id).then(setWeapons)
+    getWeaponsForLobby(lobby.weapon_set_id).then(setWeapons)
     getBrackets(lobby.id).then(setBrackets)
   }, [lobby?.id, lobby?.status])
 
@@ -244,7 +244,7 @@ export function MatchPage() {
             : await getPowerScores(players.map(p => p.id))
           const weaponList = weapons.length > 0
             ? weapons
-            : (lobby.weapon_set_id ? await getWeaponsForLobby(lobby.weapon_set_id) : [])
+            : await getWeaponsForLobby(lobby.weapon_set_id)
 
           await advanceWinners(lobby.id, currentRound, scores, weaponList)
           await updateLobbyStatus(lobby.id, 'between_rounds', currentRound + 1)

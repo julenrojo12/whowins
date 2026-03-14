@@ -8,7 +8,7 @@ export async function createLobby(
   hostSessionId: string,
   format: number,
   characterSetId: string,
-  weaponSetId: string
+  weaponSetId: string | null
 ): Promise<Lobby> {
   const code = generateLobbyCode()
   const { data, error } = await supabase
@@ -86,7 +86,7 @@ export async function emitLobbyEvent(
  */
 export async function replayWithAttributes(
   lobbyId: string,
-  weaponSetId: string,
+  weaponSetId: string | null,
   characterSetId: string,
   playerIds: string[]
 ): Promise<void> {

@@ -47,14 +47,14 @@ export function ResultsPage() {
       setCharSets(cs)
       setWeapSets(ws)
       setCharSetId(lobby?.character_set_id ?? cs[0]?.id ?? '')
-      setWeapSetId(lobby?.weapon_set_id ?? ws[0]?.id ?? '')
+      setWeapSetId(lobby?.weapon_set_id ?? '')
     } finally {
       setLoadingSets(false)
     }
   }
 
   async function handleReplay() {
-    if (!lobby || !charSetId || !weapSetId) return
+    if (!lobby || !charSetId) return
     setReplaying(true)
     // Clear stale brackets and votes from the store before the restart so the
     // Match page never sees leftover 'closed' matches from the previous game.
@@ -62,7 +62,7 @@ export function ResultsPage() {
     setVotes([])
     try {
       const playerIds = players.map(p => p.id)
-      await replayWithAttributes(lobby.id, weapSetId, charSetId, playerIds)
+      await replayWithAttributes(lobby.id, weapSetId || null, charSetId, playerIds)
       // Navigation driven automatically by realtime lobby status change
     } catch (e) {
       console.error(e)
@@ -167,6 +167,7 @@ export function ResultsPage() {
                 value={weapSetId}
                 onChange={e => setWeapSetId(e.target.value)}
               >
+                <option value="">{t('home.allWeapons')}</option>
                 {weapSets.map(ws => (
                   <option key={ws.id} value={ws.id}>{ws.name}</option>
                 ))}
@@ -176,7 +177,7 @@ export function ResultsPage() {
             <ArcadeButton
               variant="yellow"
               loading={replaying}
-              disabled={!charSetId || !weapSetId}
+              disabled={!charSetId}
               onClick={handleReplay}
             >
               {t('results.confirmReplay')}

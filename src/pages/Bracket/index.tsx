@@ -34,7 +34,7 @@ export function BracketPage() {
     Promise.all([
       getBrackets(lobby.id).then(setBrackets),
       getPlayersForLobby(lobby.id).then(setPlayers),
-      lobby.weapon_set_id ? getWeaponsForLobby(lobby.weapon_set_id).then(setWeapons) : Promise.resolve(),
+      getWeaponsForLobby(lobby.weapon_set_id).then(setWeapons),
     ]).finally(() => setLoading(false))
   }, [lobby?.id, lobby?.status])
 

@@ -90,9 +90,7 @@ export function RatingPage() {
       const scores = await savePowerScores(allPlayers, lobby.id)
       setPowerScores(scores)
 
-      const weapons = lobby.weapon_set_id
-        ? await getWeaponsForLobby(lobby.weapon_set_id)
-        : []
+      const weapons = await getWeaponsForLobby(lobby.weapon_set_id)
       setWeapons(weapons)
 
       const brackets = await generateBracket(lobby.id, scores, weapons)
