@@ -228,7 +228,7 @@ export function MatchPage() {
       const allBrackets  = await getBrackets(lobby.id)
       const currentRound = openMatch.round_number
       const roundMatches = allBrackets.filter(b => b.round_number === currentRound)
-      const allClosed    = roundMatches.every(b => b.status === 'closed' || b.id === openMatch.id)
+      const allClosed    = roundMatches.every(b => b.status === 'closed' || b.winner_id !== null || b.id === openMatch.id)
 
       if (allClosed) {
         const nextRound = allBrackets.filter(b => b.round_number === currentRound + 1)
@@ -262,9 +262,17 @@ export function MatchPage() {
           setActiveMatchId(nextMatch.id)
           await emitLobbyEvent(lobby.id, 'match_opened', { match_id: nextMatch.id })
         } else {
-          // Fallback: no pending match found but round not fully closed — advance anyway
+          // Fallback: no pending match found. Run advanceWinners to populate the
+          // next round player IDs before transitioning, so the host is not stuck.
+          const scores = powerScores.length > 0
+            ? powerScores
+            : await getPowerScores(players.map(p => p.id))
+          const weaponList = weapons.length > 0
+            ? weapons
+            : await getWeaponsForLobby(lobby.weapon_set_id)
+          await advanceWinners(lobby.id, currentRound, scores, weaponList)
           await updateLobbyStatus(lobby.id, 'between_rounds', currentRound + 1)
-          await emitLobbyEvent(lobby.id, 'match_closed', { match_id: openMatch.id })
+          await emitLobbyEvent(lobby.id, 'round_complete', { next_round: currentRound + 1 })
         }
       }
     } finally {
