@@ -9,7 +9,8 @@ import { createLobby, getLobbyByCode } from '../../services/lobbyService'
 import { getCharacterSets, getWeaponSets } from '../../services/setsService'
 import { useSession } from '../../hooks/useSession'
 import { useGameStore } from '../../store'
-import { LOBBY_FORMATS } from '../../lib/constants'
+import { LOBBY_FORMATS, FORMATS_2V2 } from '../../lib/constants'
+import type { BattleMode } from '../../lib/constants'
 import type { CharacterSet, WeaponSet } from '../../types/game'
 import { useLobbyMusic } from '../../hooks/useAudio'
 import { useT } from '../../i18n'
@@ -32,6 +33,7 @@ export function HomePage() {
 
   // Create form state
   const [format, setFormat]             = useState<number>(4)
+  const [battleMode, setBattleMode]     = useState<BattleMode>('1v1')
   const [charSets, setCharSets]         = useState<CharacterSet[]>([])
   const [weapSets, setWeapSets]         = useState<WeaponSet[]>([])
   const [charSetId, setCharSetId]       = useState('')
@@ -56,7 +58,7 @@ export function HomePage() {
     if (!charSetId) return
     setCreating(true)
     try {
-      const lobby = await createLobby(sessionId, format, charSetId, weapSetId || null)
+      const lobby = await createLobby(sessionId, format, charSetId, weapSetId || null, battleMode)
       setLobby(lobby)
       navigate(`/lobby/${lobby.code}`)
     } catch (e) {
@@ -132,9 +134,29 @@ export function HomePage() {
         ) : (
           <div className={styles.createForm}>
             <div className={styles.field}>
+              <label className={styles.fieldLabel}>{t('home.battleMode')}</label>
+              <div className={styles.formatGrid}>
+                {(['1v1', '2v2'] as BattleMode[]).map(mode => (
+                  <ArcadeButton
+                    key={mode}
+                    size="sm"
+                    variant={battleMode === mode ? 'yellow' : 'ghost'}
+                    onClick={() => {
+                      setBattleMode(mode)
+                      // 2v2 requires min 4 players — if format=2 was selected, bump to 4
+                      if (mode === '2v2' && format === 2) setFormat(4)
+                    }}
+                  >
+                    {mode === '1v1' ? t('home.oneVOne') : t('home.twoVTwo')}
+                  </ArcadeButton>
+                ))}
+              </div>
+            </div>
+
+            <div className={styles.field}>
               <label className={styles.fieldLabel}>{t('home.format')}</label>
               <div className={styles.formatGrid}>
-                {LOBBY_FORMATS.map(f => (
+                {(battleMode === '2v2' ? FORMATS_2V2 : LOBBY_FORMATS).map(f => (
                   <ArcadeButton
                     key={f}
                     size="sm"

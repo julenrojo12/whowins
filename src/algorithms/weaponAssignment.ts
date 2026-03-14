@@ -1,4 +1,5 @@
 import type { Weapon, BracketMatch, PlayerPowerScore } from '../types/game'
+import type { TeamComposition } from './teamFormation'
 
 /**
  * Inverse balance: stronger player gets lower danger weapon, weaker gets higher danger.
@@ -64,6 +65,106 @@ export function assignWeaponsToMatches(
   }
 
   return result
+}
+
+/**
+ * 2v2 weapon assignment: inverse balance at team level, then intra-team balance.
+ *
+ * For each match (team A = player1+player3, team B = player2+player4):
+ *   1. Compute team power scores (average of 2 members).
+ *   2. Stronger team → both weapons from the LOW-danger pool.
+ *   3. Weaker team   → both weapons from the HIGH-danger pool.
+ *   4. Within each team: stronger member gets the safer weapon.
+ */
+export function assignWeaponsToMatches2v2(
+  matches: BracketMatch[],
+  scores: PlayerPowerScore[],
+  weapons: Weapon[],
+  _teams: TeamComposition[]   // kept for future use / traceability
+): { matchId: string; weapon1_id: string; weapon2_id: string; weapon3_id: string; weapon4_id: string }[] {
+  const scoreMap = new Map(scores.map(s => [s.player_id, s.power_score]))
+  const sorted = [...weapons].sort((a, b) => a.danger_level - b.danger_level)
+  const n = sorted.length
+  const result: { matchId: string; weapon1_id: string; weapon2_id: string; weapon3_id: string; weapon4_id: string }[] = []
+
+  for (const match of matches) {
+    if (!match.player1_id || !match.player2_id || !match.player3_id || !match.player4_id) continue
+
+    const p1Score = scoreMap.get(match.player1_id) ?? 50
+    const p2Score = scoreMap.get(match.player2_id) ?? 50
+    const p3Score = scoreMap.get(match.player3_id) ?? 50
+    const p4Score = scoreMap.get(match.player4_id) ?? 50
+
+    const teamAScore = (p1Score + p3Score) / 2
+    const teamBScore = (p2Score + p4Score) / 2
+
+    const gap = Math.abs(teamAScore - teamBScore) / 100
+    const curvedGap = Math.pow(gap, 1.5)
+
+    const mid    = Math.floor(n / 2)
+    const offset = Math.round(curvedGap * mid)
+
+    // Low-danger pool for the stronger team; high-danger pool for the weaker team
+    const strongerPoolEnd  = Math.max(2, mid - offset)
+    const weakerPoolStart  = Math.min(n - 2, mid + offset)
+
+    const lowPool  = sorted.slice(0, strongerPoolEnd)
+    const highPool = sorted.slice(weakerPoolStart)
+
+    // Assign 2 distinct weapons from each pool
+    const [lowW1, lowW2]   = pickTwoDistinct(lowPool,  sorted[0])
+    const [highW1, highW2] = pickTwoDistinctWeighted(highPool, sorted[n - 1])
+
+    // Within each team: stronger member gets the safer weapon
+    const teamAStronger = p1Score >= p3Score
+    const weapon1 = teamAStronger ? lowW1  : lowW2
+    const weapon3 = teamAStronger ? lowW2  : lowW1
+
+    const teamBStronger = p2Score >= p4Score
+    const weapon2 = teamBStronger ? highW1 : highW2
+    const weapon4 = teamBStronger ? highW2 : highW1
+
+    // Swap if team B is actually stronger
+    if (teamBScore > teamAScore) {
+      result.push({
+        matchId:    match.id,
+        weapon1_id: weapon2.id,
+        weapon2_id: weapon1.id,
+        weapon3_id: weapon4.id,
+        weapon4_id: weapon3.id,
+      })
+    } else {
+      result.push({
+        matchId:    match.id,
+        weapon1_id: weapon1.id,
+        weapon2_id: weapon2.id,
+        weapon3_id: weapon3.id,
+        weapon4_id: weapon4.id,
+      })
+    }
+  }
+
+  return result
+}
+
+/** Pick two distinct weapons from pool; falls back to fallback for the second if needed. */
+function pickTwoDistinct(pool: Weapon[], fallback: Weapon): [Weapon, Weapon] {
+  if (pool.length === 0) return [fallback, fallback]
+  const first = pool[Math.floor(Math.random() * pool.length)]
+  const rest  = pool.filter(w => w.id !== first.id)
+  const second = rest.length > 0
+    ? rest[Math.floor(Math.random() * rest.length)]
+    : fallback
+  return [first, second]
+}
+
+/** Pick two distinct weapons with inverse-danger weighting. */
+function pickTwoDistinctWeighted(pool: Weapon[], fallback: Weapon): [Weapon, Weapon] {
+  if (pool.length === 0) return [fallback, fallback]
+  const first = weightedDangerPick(pool, fallback)
+  const rest  = pool.filter(w => w.id !== first.id)
+  const second = weightedDangerPick(rest, first.id !== fallback.id ? fallback : pool[0])
+  return [first, second]
 }
 
 /**

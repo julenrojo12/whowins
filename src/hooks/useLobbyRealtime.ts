@@ -8,14 +8,15 @@ import { getPlayersForLobby } from '../services/playerService'
 import { getRatingsForLobby } from '../services/ratingService'
 import { getBrackets } from '../services/bracketService'
 import { getVotesForLobby } from '../services/voteService'
-import type { Lobby, Player, Rating, BracketMatch, Vote, LobbyEvent } from '../types/game'
+import { getTeamsForLobby } from '../services/teamService'
+import type { Lobby, Player, Rating, BracketMatch, Vote, LobbyEvent, Team } from '../types/game'
 
 export function useLobbyRealtime(lobbyId: string | null) {
   const navigate = useNavigate()
   const {
     setLobby, setPlayers, setRatings, setBrackets, setVotes,
     upsertPlayer, upsertRating, upsertBracket, upsertVote,
-    lobby, setVotingStartedEvent, setConnectionStatus,
+    lobby, setVotingStartedEvent, setConnectionStatus, setTeams,
   } = useGameStore()
 
   // Resolve effective lobby ID: prop first, then localStorage fallback (survives F5)
@@ -33,12 +34,13 @@ export function useLobbyRealtime(lobbyId: string | null) {
 
   // Resync all game state from DB — fills any events missed while disconnected
   const resync = useCallback(async (id: string) => {
-    const [freshLobby, players, ratings, brackets, votes] = await Promise.all([
+    const [freshLobby, players, ratings, brackets, votes, teams] = await Promise.all([
       getLobbyById(id),
       getPlayersForLobby(id),
       getRatingsForLobby(id),
       getBrackets(id),
       getVotesForLobby(id),
+      getTeamsForLobby(id),
     ])
     if (!mountedRef.current) return
     if (freshLobby) {
@@ -49,6 +51,7 @@ export function useLobbyRealtime(lobbyId: string | null) {
     setRatings(ratings)
     setBrackets(brackets)
     setVotes(votes)
+    setTeams(teams)
   }, [navigate])
 
   // Build (or rebuild) a channel with all subscriptions + health monitoring
@@ -102,6 +105,18 @@ export function useLobbyRealtime(lobbyId: string | null) {
         (payload) => {
           const vote = payload.new as Vote
           if (vote?.bracket_id) upsertVote(vote)
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'teams' },
+        (payload) => {
+          const team = payload.new as Team
+          if (team?.lobby_id === id) {
+            getTeamsForLobby(id).then(ts => {
+              if (mountedRef.current) setTeams(ts)
+            })
+          }
         }
       )
       .on(

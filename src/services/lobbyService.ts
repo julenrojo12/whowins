@@ -8,7 +8,8 @@ export async function createLobby(
   hostSessionId: string,
   format: number,
   characterSetId: string,
-  weaponSetId: string | null
+  weaponSetId: string | null,
+  battleMode: '1v1' | '2v2' = '1v1'
 ): Promise<Lobby> {
   const code = generateLobbyCode()
   const { data, error } = await supabase
@@ -17,6 +18,7 @@ export async function createLobby(
       code,
       host_session_id: hostSessionId,
       format,
+      battle_mode: battleMode,
       character_set_id: characterSetId,
       weapon_set_id: weaponSetId,
       status: 'waiting',

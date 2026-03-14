@@ -5,7 +5,7 @@ import { ArcadeFrame } from '../../components/layout/ArcadeFrame'
 import { StarInput } from '../../components/ui/StarInput'
 import { PlayerAvatar } from '../../components/game/PlayerAvatar'
 import { upsertRating, getRatingsForLobby } from '../../services/ratingService'
-import { savePowerScores, generateBracket, openMatch } from '../../services/bracketService'
+import { savePowerScores, generateBracket, generateBracket2v2, openMatch } from '../../services/bracketService'
 import { getWeaponsForLobby } from '../../services/setsService'
 import { updateLobbyStatus, emitLobbyEvent } from '../../services/lobbyService'
 import { getPlayersForLobby } from '../../services/playerService'
@@ -93,7 +93,9 @@ export function RatingPage() {
       const weapons = await getWeaponsForLobby(lobby.weapon_set_id)
       setWeapons(weapons)
 
-      const brackets = await generateBracket(lobby.id, scores, weapons)
+      const brackets = lobby.battle_mode === '2v2'
+        ? await generateBracket2v2(lobby.id, scores, weapons)
+        : await generateBracket(lobby.id, scores, weapons)
       setBrackets(brackets)
 
       // Auto-open first match of round 1 and go straight to voting

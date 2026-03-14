@@ -171,8 +171,15 @@ export function BracketPage() {
                   {byRound[round]?.map(match => {
                     const p1 = getPlayer(match.player1_id)
                     const p2 = getPlayer(match.player2_id)
+                    const p3 = getPlayer(match.player3_id ?? null)
+                    const p4 = getPlayer(match.player4_id ?? null)
                     const w1 = getWeapon(match.weapon1_id)
                     const w2 = getWeapon(match.weapon2_id)
+                    const w3 = getWeapon(match.weapon3_id ?? null)
+                    const w4 = getWeapon(match.weapon4_id ?? null)
+                    const is2v2Match = !!(match.player3_id && match.player4_id)
+                    const teamAWon = match.winner_id === match.player1_id
+                    const teamBWon = match.winner_id === match.player2_id
 
                     return (
                       <div
@@ -182,24 +189,47 @@ export function BracketPage() {
                           match.status === 'closed' ? styles.closed : '',
                         ].filter(Boolean).join(' ')}
                       >
-                        <div className={[styles.fighter, match.winner_id === match.player1_id ? styles.winnerFighter : styles.loserFighter].filter(Boolean).join(' ')}>
+                        {/* Team A / Player 1 side */}
+                        <div className={[(is2v2Match ? (teamAWon ? styles.winnerFighter : styles.loserFighter) : (match.winner_id === match.player1_id ? styles.winnerFighter : styles.loserFighter)), styles.fighter].filter(Boolean).join(' ')}>
                           {p1 ? <PlayerAvatar player={p1} size="sm" showName eliminated={p1.is_eliminated} /> : <span className={styles.tbd}>{t('bracket.tbd')}</span>}
                           {w1 && <WeaponBadge weapon={w1} />}
+                          {/* 2v2: second team A member */}
+                          {is2v2Match && p3 && (
+                            <div className={styles.teamMateSmall}>
+                              <PlayerAvatar player={p3} size="sm" showName eliminated={p3.is_eliminated} />
+                              {w3 && <WeaponBadge weapon={w3} />}
+                            </div>
+                          )}
                         </div>
+
                         <div className={styles.vs}>
                           {match.winner_id
                             ? <span className="display-text-primary text-display" style={{ fontSize: 14 }}>{t('bracket.winner')}</span>
                             : <span className={styles.vsText}>VS</span>
                           }
-                          {match.winner_id && (
+                          {match.winner_id && !is2v2Match && (
                             <span className="text-green text-ui" style={{ fontSize: '0.9rem' }}>
                               {getPlayer(match.winner_id)?.name}
                             </span>
                           )}
+                          {match.winner_id && is2v2Match && (
+                            <span className="text-green text-ui" style={{ fontSize: '0.9rem' }}>
+                              {teamAWon ? `${p1?.name} & ${p3?.name}` : `${p2?.name} & ${p4?.name}`}
+                            </span>
+                          )}
                         </div>
-                        <div className={[styles.fighter, match.winner_id === match.player2_id ? styles.winnerFighter : styles.loserFighter].filter(Boolean).join(' ')}>
+
+                        {/* Team B / Player 2 side */}
+                        <div className={[(is2v2Match ? (teamBWon ? styles.winnerFighter : styles.loserFighter) : (match.winner_id === match.player2_id ? styles.winnerFighter : styles.loserFighter)), styles.fighter].filter(Boolean).join(' ')}>
                           {p2 ? <PlayerAvatar player={p2} size="sm" showName eliminated={p2.is_eliminated} /> : <span className={styles.tbd}>{t('bracket.tbd')}</span>}
                           {w2 && <WeaponBadge weapon={w2} />}
+                          {/* 2v2: second team B member */}
+                          {is2v2Match && p4 && (
+                            <div className={styles.teamMateSmall}>
+                              <PlayerAvatar player={p4} size="sm" showName eliminated={p4.is_eliminated} />
+                              {w4 && <WeaponBadge weapon={w4} />}
+                            </div>
+                          )}
                         </div>
                       </div>
                     )

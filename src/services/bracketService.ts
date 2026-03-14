@@ -1,9 +1,13 @@
 import { supabase } from '../lib/supabase'
 import type { BracketMatch, PlayerPowerScore, Weapon } from '../types/game'
 import { computeAllPowerScores } from '../algorithms/powerScore'
-import { generateFirstRoundMatches, generateEmptyRounds, getNextRoundUpdates, assignSeeds } from '../algorithms/bracket'
-import { assignWeaponsToMatches } from '../algorithms/weaponAssignment'
+import {
+  generateFirstRoundMatches, generateEmptyRounds, getNextRoundUpdates, assignSeeds,
+  generateFirstRoundMatches2v2, generateEmptyRounds2v2, getNextRoundUpdates2v2,
+} from '../algorithms/bracket'
+import { assignWeaponsToMatches, assignWeaponsToMatches2v2 } from '../algorithms/weaponAssignment'
 import { getRatingsForLobby } from './ratingService'
+import { formAndSaveTeams } from './teamService'
 
 export async function savePowerScores(
   playerIds: string[],
@@ -128,4 +132,81 @@ export async function advanceWinners(
   // Re-assign weapons for next round matches
   const updatedNext = await getBrackets(lobbyId).then(b => b.filter(m => m.round_number === completedRound + 1))
   await applyWeaponAssignments(updatedNext, scores, weapons)
+}
+
+// ─── 2v2 bracket functions ───────────────────────────────────────────────────
+
+export async function generateBracket2v2(
+  lobbyId: string,
+  scores: PlayerPowerScore[],
+  weapons: Weapon[]
+): Promise<BracketMatch[]> {
+  // Form and save balanced teams, returns enriched compositions with team IDs
+  const { teamCompositions } = await formAndSaveTeams(lobbyId, scores)
+
+  const totalTeams = teamCompositions.length
+  const round1     = generateFirstRoundMatches2v2(lobbyId, teamCompositions)
+  const later      = generateEmptyRounds2v2(lobbyId, totalTeams)
+
+  const { data, error } = await supabase
+    .from('brackets')
+    .insert([...round1, ...later])
+    .select()
+
+  if (error) throw error
+  const allMatches = data as BracketMatch[]
+
+  // Assign weapons to round 1
+  const round1Saved = allMatches.filter(m => m.round_number === 1)
+  await applyWeaponAssignments2v2(round1Saved, scores, weapons, teamCompositions)
+
+  return allMatches
+}
+
+export async function applyWeaponAssignments2v2(
+  matches: BracketMatch[],
+  scores: PlayerPowerScore[],
+  weapons: Weapon[],
+  teams: Parameters<typeof assignWeaponsToMatches2v2>[3]
+): Promise<void> {
+  const assignments = assignWeaponsToMatches2v2(matches, scores, weapons, teams)
+  for (const a of assignments) {
+    const { error } = await supabase
+      .from('brackets')
+      .update({
+        weapon1_id: a.weapon1_id,
+        weapon2_id: a.weapon2_id,
+        weapon3_id: a.weapon3_id,
+        weapon4_id: a.weapon4_id,
+      })
+      .eq('id', a.matchId)
+    if (error) throw error
+  }
+}
+
+export async function advanceWinners2v2(
+  lobbyId: string,
+  completedRound: number,
+  scores: PlayerPowerScore[],
+  weapons: Weapon[]
+): Promise<void> {
+  const allBrackets      = await getBrackets(lobbyId)
+  const completedMatches = allBrackets.filter(m => m.round_number === completedRound)
+  const nextMatches      = allBrackets.filter(m => m.round_number === completedRound + 1)
+
+  const updates = getNextRoundUpdates2v2(completedMatches, nextMatches)
+  for (const u of updates) {
+    const upd: Record<string, string | undefined> = {}
+    if (u.player1_id) upd.player1_id = u.player1_id
+    if (u.player2_id) upd.player2_id = u.player2_id
+    if (u.player3_id) upd.player3_id = u.player3_id
+    if (u.player4_id) upd.player4_id = u.player4_id
+    const { error } = await supabase.from('brackets').update(upd).eq('id', u.matchId)
+    if (error) throw error
+  }
+
+  // Re-assign weapons for next round
+  const updatedNext = await getBrackets(lobbyId).then(b => b.filter(m => m.round_number === completedRound + 1))
+  // Use empty team compositions — weapon assignment uses player scores directly
+  await applyWeaponAssignments2v2(updatedNext, scores, weapons, [])
 }

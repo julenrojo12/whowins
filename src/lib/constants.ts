@@ -1,6 +1,14 @@
 export const LOBBY_FORMATS = [2, 4, 8, 16] as const
 export type LobbyFormat = typeof LOBBY_FORMATS[number]
 
+export const BATTLE_MODE = {
+  ONE_V_ONE: '1v1',
+  TWO_V_TWO: '2v2',
+} as const
+export type BattleMode = typeof BATTLE_MODE[keyof typeof BATTLE_MODE]
+
+export const FORMATS_2V2 = [4, 8, 16] as const
+
 export const LOBBY_CODE_LENGTH = 6
 export const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024  // 5MB
 export const MAX_SET_IMAGE_SIZE_BYTES = 10 * 1024 * 1024 // 10MB
